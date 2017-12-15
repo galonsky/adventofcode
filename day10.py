@@ -5,9 +5,8 @@ def sublist(nums, start, length):
 	else:
 		return nums[start:(start+length)]
 
-def hash():
+def hash(input):
 	#lengths = [83,0,193,1,254,237,187,40,88,27,2,255,149,29,42,100]
-	input = '83,0,193,1,254,237,187,40,88,27,2,255,149,29,42,100'
 	lengths = []
 	for char in input:
 		lengths.append(ord(char))
@@ -34,8 +33,8 @@ def hash():
 		for i in range(block * 16, block * 16 + 16):
 			n ^= nums[i]
 		dense.append(n)
-	print(dense)
+	#print(dense)
 	return bytearray(dense).hex()
 
 #print(sublist([1,2,3,4,5], 3, 2))
-print(hash())
+#print(hash('83,0,193,1,254,237,187,40,88,27,2,255,149,29,42,100'))
