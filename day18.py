@@ -1,4 +1,6 @@
 import re
+import collections
+import concurrent.futures
 
 patterns = {
 	"set" : re.compile('set ([a-z]) ([a-z]|\-?[0-9]+)'),
@@ -22,50 +24,79 @@ def value(registers, str):
 	return int(str)
 
 
-def run_program():
-	registers = {}
-	last_freq = None
-	pc = 0
-	with open('day18_input.txt') as file:
-		lines = [line for line in file]
+class Program:
+	
+	def __init__(self, instrs, pid, in_queue, out_queue):
+		self.instrs = instrs
+		self.pid = pid
+		self.in_queue = in_queue
+		self.out_queue = out_queue
+		self.registers = {
+			'p': pid
+		}
+		self.pc = 0
+		self.total_sent = 0
+
+	def run_program(self):
+		sent = False
+		last_freq = None
+		
+			
 		iters = 0
-		while pc >= 0 and pc < len(lines):
+		times_sent = 0
+		while self.pc >= 0 and self.pc < len(self.instrs):
 			pc_incr = 1
-			cmd_str = lines[pc].rstrip('\n')
-			print(cmd_str)
+			cmd_str = self.instrs[self.pc]
+			#print(pid, cmd_str)
 			instr, match = get_instr(cmd_str)
 			if instr == 'set':
-				registers[match.groups()[0]] = value(registers, match.groups()[1])
+				self.registers[match.groups()[0]] = value(self.registers, match.groups()[1])
 			elif instr == 'add':
 				reg = match.groups()[0]
-				registers[reg] = registers.get(reg, 0) + value(registers, match.groups()[1])
+				self.registers[reg] = self.registers.get(reg, 0) + value(self.registers, match.groups()[1])
 			elif instr == 'mul':
 				reg = match.groups()[0]
-				registers[reg] = registers.get(reg, 0) * value(registers, match.groups()[1])
+				self.registers[reg] = self.registers.get(reg, 0) * value(self.registers, match.groups()[1])
 			elif instr == 'mod':
 				reg = match.groups()[0]
-				registers[reg] = registers.get(reg, 0) % value(registers, match.groups()[1])
+				self.registers[reg] = self.registers.get(reg, 0) % value(self.registers, match.groups()[1])
 			elif instr == 'snd':
-				last_freq = value(registers, match.groups()[0])
+				last_freq = value(self.registers, match.groups()[0])
+				self.total_sent += 1
+				print('{} sending {}'.format(self.pid, last_freq))
+				self.out_queue.appendleft(last_freq)
+				sent = True
 			elif instr == 'rcv':
-				if value(registers, match.groups()[0]) != 0:
-					print(last_freq)
-					return
+				if len(self.in_queue) == 0:
+					if not sent:
+						return 'blocked'
+					return 'kinda'
+				
+				reg = match.groups()[0]
+				val = self.in_queue.pop()
+				self.registers[reg] = val
+				print('{} receiving {}'.format(self.pid, val))
 			elif instr == 'jgz':
-				if value(registers, match.groups()[0]) > 0:
-					pc_incr = value(registers, match.groups()[1])
+				if value(self.registers, match.groups()[0]) > 0:
+					pc_incr = value(self.registers, match.groups()[1])
 
-			pc += pc_incr
+			self.pc += pc_incr
 			iters += 1
+		return 'exit'
+		
+with open('day18_input.txt') as file:
+	instrs = [line.rstrip('\n') for line in file]
+	q0 = collections.deque()
+	q1 = collections.deque()
+	prg0 = Program(instrs, 0, q0, q1)
+	prg1 = Program(instrs, 1, q1, q0)
+	
+	ret0 = prg0.run_program()
+	ret1 = prg1.run_program()
+	
+	while not (ret1 == 'blocked' and ret0 == 'blocked'):
+		ret0 = prg0.run_program()
+		ret1 = prg1.run_program()
+	print('both vloxked')
 
-run_program()
-
-
-
-
-
-
-
-
-
-			
+	print(prg1.total_sent)
