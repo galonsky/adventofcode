@@ -61,25 +61,4 @@ with open('day23_input.txt') as file:
 	ret0 = prg0.run_program()
 	print(ret0)
 	
-def program():
-	b = 84
-	c = b
-	b *= 100
-	b += 100000
-	c = b
-	c += 17000
-	f = 1
-	d = 2
-	e = 2
-	
-	while g != 0:
-		g = d
-		g *= e
-		g -= b
-		
-		if g != 0:
-			f = 0
-			
-		e -= 1
-		g = e
-		g -= b
+
