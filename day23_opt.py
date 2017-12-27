@@ -26,7 +26,7 @@ import math
 
 h = 0
 for b in range(108400, 125400 + 1, 17):
-	sqrt = math.ceil(math.sqrt(b))
-	if any((b % k == 0 for k in range(2,sqrt))):
-		h = h + 1
+    sqrt = math.ceil(math.sqrt(b))
+    if any((b % k == 0 for k in range(2, sqrt))):
+        h = h + 1
 print(h)
