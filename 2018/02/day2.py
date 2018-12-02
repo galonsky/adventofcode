@@ -26,20 +26,16 @@ def get_checksum(filename):
 
 
 # part 2
-def get_shared_portion_with_one_difference(filename):
-    pairs = []
-    for line1 in get_lines(filename):
-        for line2 in get_lines(filename):
-            if line1 != line2:
-                num_diff = 0
-                shared_portion = ''
-                for i in range(len(line1)):
-                    if line1[i] != line2[i]:
-                        num_diff += 1
-                    else:
-                        shared_portion += line1[i]
-                if num_diff == 1:
-                    return shared_portion
+def get_shared_portion_with_one_difference_v2(filename):
+    lines = list(get_lines(filename))
+    wordlen = len(lines[0])
+    for i in range(wordlen):
+        seen = set()
+        for line in lines:
+            cut_out = line[0:i] + line[i+1:]
+            if cut_out in seen:
+                return cut_out
+            seen.add(cut_out)
 
 
-assert get_shared_portion_with_one_difference('day2_input.txt') == 'fvstwblgqkhpuixdrnevmaycd'
+assert get_shared_portion_with_one_difference_v2('day2_input.txt') == 'fvstwblgqkhpuixdrnevmaycd'
