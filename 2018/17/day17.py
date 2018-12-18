@@ -55,7 +55,8 @@ def count_water_tiles(scan):
     count = 0
     for x, y_map in scan.items():
         for y, c in y_map.items():
-            if c == '~' or c == '|':
+            # this 3 is hardcoded for my input. (min_y)
+            if y >= 3 and (c == '~' or c == '|'):
                 count += 1
     return count
 
