@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from collections import deque
 
 PATTERN = re.compile(r'([xy])=(\d+),\s+([xy])=(\d+)\.\.(\d+)')
 
@@ -33,10 +34,20 @@ def print_scan(scan, max_y):
         print()
     print()
 
+
+queued_calls = deque()
+
 def waterfall_file(filename):
     scan, max_y = build_scan(filename)
     #print_scan(scan, max_y)
     waterfall(scan, 500, 0, max_y)
+    while True:
+        if not queued_calls:
+            break
+        call = queued_calls.pop()
+        waterfall(scan, call[0], call[1], max_y)
+
+    print_scan(scan, max_y)
     return count_water_tiles(scan)
 
 
@@ -47,6 +58,8 @@ def count_water_tiles(scan):
             if c == '~' or c == '|':
                 count += 1
     return count
+
+
 
 def waterfall(scan, x, y, max_y, x_lambda=None):
     # import ipdb
@@ -67,6 +80,10 @@ def waterfall(scan, x, y, max_y, x_lambda=None):
         return False
 
     below = scan[x][y+1]
+
+    if below == '|':
+        scan[x][y] = '|'
+        return False
     if below == '#' or below == '~':
         scan[x][y] = '|'
         #print_scan(scan, max_y)
@@ -80,10 +97,10 @@ def waterfall(scan, x, y, max_y, x_lambda=None):
                     scan[x_i][y] = '~'
                 for x_i in range(left_index + 1, right_index):
                     if scan[x_i][y-1] == '|':
-                        waterfall(scan, x_i, y-1, max_y)
-                        return False
+                        # waterfall(scan, x_i, y-1, max_y)
+                        queued_calls.appendleft((x_i, y-1))
 
     return False
 
 
-print(waterfall_file('day17_sample.txt'))
+print(waterfall_file('day17_input.txt'))
