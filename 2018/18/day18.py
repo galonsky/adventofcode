@@ -75,17 +75,29 @@ def iterate(forest_map) -> dict:
                     new_map[x][y] = '.'
     return new_map
 
+def compute_equivalent_iteration(n):
+    since_477 = n - 477
+    return 477 + (since_477 % 28)
+
 def run_iteration(filename, iterations):
+    str_to_iteration = {}
     forest_map = load_map(filename)
-    for i in range(iterations):
-        print_map(forest_map)
+    for i in range(1, iterations + 1):
+        # print_map(forest_map)
         forest_map = iterate(forest_map)
-    print_map(forest_map)
+        #all_acres_str = ''.join(all_chars(forest_map))
+        # if all_acres_str in str_to_iteration:
+        #     #print('Iteration {} is the same as iteration {}'.format(i, str_to_iteration[all_acres_str]))
+        #     #print('computed iteration {} is the same as iteration {}'.format(i, compute_equivalent_iteration(i)))
+        # else:
+        #     str_to_iteration[all_acres_str] = i
+    # print_map(forest_map)
 
     all_acres = list(all_chars(forest_map))
+    
     num_trees = count(all_acres, '|')
     num_lumber = count(all_acres, '#')
     return num_trees * num_lumber
 
 
-print(run_iteration('day18_input.txt', 1000000000))
+print(run_iteration('day18_input.txt', compute_equivalent_iteration(1000000000)))
