@@ -80,6 +80,37 @@ def get_max_overlap(sequence):
     for i in range(len(starts)):
         yield (starts[i], ends[i])
 
+def get_num_overlaps(bot, nanobots):
+    other_bots = (b for b in nanobots if b != bot)
+    num_overlaps = 0
+    for other in other_bots:
+        criteria = [
+            (other.left() <= bot.left() <= other.right()) or (other.left() <= bot.right() <= other.right()),
+            (other.down() <= bot.down() <= other.up()) or (other.down() <= bot.up() <= other.up()),
+            (other.below() <= bot.below() <= other.above()) or (other.below() <= bot.above() <= other.above()),
+        ]
+        if all(criteria):
+            num_overlaps += 1
+    return num_overlaps
+
+def get_most_overlaps(filename):
+    nanobots = list(get_nanobots(filename))
+    overlaps = [(bot, get_num_overlaps(bot, nanobots)) for bot in nanobots]
+    best = max(overlaps, key=lambda item: (item[1], -item[0].r))
+    print(best[0])
+    print(best[1])
+    best_bot = best[0]
+
+    candidates = {}
+    for x in range(best_bot.left(), best_bot.right() + 1):
+        for y in range(best_bot.down(), best_bot.up() + 1):
+            for z in range(best_bot.below(), best_bot.above() + 1):
+                num_in_range = sum((1 for bot in nanobots if bot.coord_in_range(x, y, z)))
+                candidates[(x, y, z)] = num_in_range
+
+    max_in_range = max(candidates.values())
+    return min((abs(key[0]) + abs(key[1]) + abs(key[2]) for key in candidates.keys() if candidates[key] == max_in_range))
+
 def get_bot_with_most_in_range(filename):
     nanobots = list(get_nanobots(filename))
     max_bot = max(nanobots, key=lambda bot: bot.num_in_range(nanobots))
@@ -87,31 +118,33 @@ def get_bot_with_most_in_range(filename):
     in_range = [bot for bot in nanobots if max_bot.in_range(bot)]
     max_in_range = len(in_range)
 
+    return max_in_range
+
     # import ipdb
     # ipdb.set_trace()
 
-    lefts = [bot.left() for bot in in_range if bot.left() >= max_bot.left()]
+    lefts = [bot.left() for bot in nanobots]
     # min_x = min(lefts, default=max_bot.left())
 
-    rights = [bot.right() for bot in in_range if bot.right() <= max_bot.right()]
+    rights = [bot.right() for bot in nanobots]
     # max_x = max(rights, default=max_bot.right())
 
-    unders = [bot.down() for bot in in_range if max_bot.down() <= bot.down()]
+    unders = [bot.down() for bot in nanobots]
     # min_y = min(unders, default=max_bot.down())
 
-    overs = [bot.up() for bot in in_range if max_bot.up() >= bot.up()]
+    overs = [bot.up() for bot in nanobots]
     # max_y = max(overs, default=max_bot.up())
 
-    belows = [bot.below() for bot in in_range if max_bot.below() <= bot.below()]
+    belows = [bot.below() for bot in nanobots]
     # min_z = min(belows, default=max_bot.below())
 
-    aboves = [bot.above() for bot in in_range if max_bot.above() >= bot.above()]
+    aboves = [bot.above() for bot in nanobots]
     # max_z = max(aboves, default=max_bot.above())
 
     xs = sorted([(x, 1) for x in lefts] + [(x, -1) for x in rights])
     ys = sorted([(y, 1) for y in unders] + [(y, -1) for y in overs])
     zs = sorted([(z, 1) for z in belows] + [(z, -1) for z in aboves])
-    return xs, ys, zs
+    #return xs, ys, zs
 
     x_ranges = list(get_max_overlap(xs))
     y_ranges = list(get_max_overlap(ys))
@@ -119,19 +152,29 @@ def get_bot_with_most_in_range(filename):
 
     return x_ranges, y_ranges, z_ranges
 
-    # xs = [x[0] for x in xs]
-    # ys = [y[0] for y in ys]
-    # zs = [z[0] for z in zs]
+    xs = [x[0] for x in xs]
+    ys = [y[0] for y in ys]
+    zs = [z[0] for z in zs]
 
-    # candidates = {}
+    candidates = {}
 
-    # for x in xs:
-    #     for y in ys:
-    #         for z in zs:
+    for x in xs:
+        for y in ys:
+            for z in zs:
+                num_in_range = sum((1 for bot in in_range if bot.coord_in_range(x, y, z)))
+                candidates[(x, y, z)] = num_in_range
+
+    # for xi in range(len(xs) - 1):
+    #     x = (xs[xi] + xs[xi + 1]) // 2
+    #     for yi in range(len(ys) - 1):
+    #         y = (ys[yi] + ys[yi + 1]) // 2
+    #         for zi in range(len(zs) - 1):
+    #             z = (zs[zi] + zs[zi + 1]) // 2
     #             num_in_range = sum((1 for bot in in_range if bot.coord_in_range(x, y, z)))
     #             candidates[(x, y, z)] = num_in_range
 
-    # max_in_range = max(candidates.values())
+    max_in_range = max(candidates.values())
+    return max_in_range
     # return min((abs(key[0]) + abs(key[1]) + abs(key[2]) for key in candidates.keys() if candidates[key] == max_in_range))
 
     candidates = {}
@@ -148,4 +191,4 @@ def get_bot_with_most_in_range(filename):
     return min((abs(key[0]) + abs(key[1]) + abs(key[2]) for key in candidates.keys() if candidates[key] == max_in_range))
     #return (max_bot.x, max_bot.y, max_bot.z), max_bot.num_in_range(nanobots)
 
-print(get_bot_with_most_in_range('day23_sample2.txt'))
+print(get_most_overlaps('day23_input.txt'))
