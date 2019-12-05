@@ -37,7 +37,7 @@ def run_program(int_codes: List[int]) -> List[int]:
             int_codes[int_codes[pc+3]] = multiplicand1 * multiplicand2
         elif opcode == 3:
             param = int_codes[pc+1]
-            int_codes[param] = 1  # hardcoded for part 1
+            int_codes[param] = int(input("enter input:"))
             num_instructions = 2
         elif opcode == 4:
             print(get_value(int_codes, int_codes[pc+1], get_mode(modes, 0)))
