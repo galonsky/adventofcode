@@ -80,7 +80,7 @@ class Program:
             elif opcode == 6:
                 to_test = get_value(self.int_codes, self.int_codes[self.pc+1], get_mode(modes, 0))
                 if to_test == 0:
-                    self.pc = get_value(self.int_codes, self.int_codes[pc+2], get_mode(modes, 1))
+                    self.pc = get_value(self.int_codes, self.int_codes[self.pc+2], get_mode(modes, 1))
                 else:
                     self.pc += 3
             elif opcode == 7:
