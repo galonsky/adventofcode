@@ -9,27 +9,27 @@ class Moon:
     v_x: int = 0
     v_y: int = 0
     v_z: int = 0
+
+    def apply_gravity_axis(self, other_moon: 'Moon', axis: str):
+        v_attr = 'v_' + axis
+        if getattr(self, axis) < getattr(other_moon, axis):
+            setattr(self, v_attr, getattr(self, v_attr) + 1)
+        elif getattr(self, axis) > getattr(other_moon, axis):
+            setattr(self, v_attr, getattr(self, v_attr) - 1)
     
     def apply_gravity(self, other_moon: 'Moon'):
-        if self.x < other_moon.x:
-            self.v_x += 1
-        elif self.x > other_moon.x:
-            self.v_x -= 1
-        
-        if self.y < other_moon.y:
-            self.v_y += 1
-        elif self.y > other_moon.y:
-            self.v_y -= 1
-        
-        if self.z < other_moon.z:
-            self.v_z += 1
-        elif self.z > other_moon.z:
-            self.v_z -= 1
+        self.apply_gravity_axis(other_moon, 'x')
+        self.apply_gravity_axis(other_moon, 'y')
+        self.apply_gravity_axis(other_moon, 'z')
+    
+    def apply_velocity_axis(self, axis: str):
+        v_attr = 'v_' + axis
+        setattr(self, axis, getattr(self, axis) + getattr(self, v_attr))
     
     def apply_velocity(self):
-        self.x += self.v_x
-        self.y += self.v_y
-        self.z += self.v_z
+        self.apply_velocity_axis('x')
+        self.apply_velocity_axis('y')
+        self.apply_velocity_axis('z')
     
     def get_potential_energy(self):
         return abs(self.x) + abs(self.y) + abs(self.z)
@@ -53,6 +53,13 @@ def iterate_moons(moons, steps):
 
     total_energy = sum((moon.get_total_energy() for moon in moons))
     print(total_energy)
+
+# def find_steps_until_loop(moons):
+#     initial_x = [moon.x for moon in moons]
+#     initial_y = [moon.y for moon in moons]
+#     initial_z = [moon.z for moon in moons]
+
+
 
 moons = [
     Moon(x=3, y=-6, z=6),
