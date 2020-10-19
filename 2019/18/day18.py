@@ -93,7 +93,7 @@ def generate_graph(map: List[str]):
     # print(start_x, start_y)
     nodes_created = 0
 
-    min_distance_by_keys: Dict[Tuple[str, ...], int] = {}
+    min_distance_by_keys: Dict[Tuple[str, int, int], int] = {}
 
     min_distance = math.inf
 
@@ -101,18 +101,27 @@ def generate_graph(map: List[str]):
     queue = deque([root])
     while queue:
         current = queue.popleft()
+        print(current.keys)
         found_keys = find_keys(current.x, current.y, map, current.keys, 0, set())
         # print(found_keys)
         if not found_keys:
             # print(f"last! {current} {current.distance}")
-            if current.distance < min_distance:
-                min_distance = current.distance
+            # if current.distance < min_distance:
+            #     min_distance = current.distance
+            dict_key = (''.join(sorted(list(current.keys))), current.x, current.y)
+            return min_distance_by_keys[dict_key]
         for (key, distance, x, y) in found_keys:
             new_keys = set(current.keys)
             new_keys.add(key)
-            new_node = Node(key, x, y, new_keys, distance=current.distance + distance)
-            current.add_child(new_node, distance)
-            queue.append(new_node)
+            new_distance = current.distance + distance
+
+            dict_key = (''.join(sorted(list(new_keys))), x, y)
+            if dict_key not in min_distance_by_keys or new_distance < min_distance_by_keys[dict_key]:
+                min_distance_by_keys[dict_key] = new_distance
+
+                new_node = Node(key, x, y, new_keys, distance=new_distance)
+                current.add_child(new_node, distance)
+                queue.append(new_node)
             # nodes_created += 1
             # print(nodes_created)
 
@@ -129,8 +138,9 @@ def run(filename: str):
 
 
 if __name__ == "__main__":
-    assert run('sample1.txt') == 8
-    assert run('sample2.txt') == 86
-    assert run('sample3.txt') == 132
+    # assert run('sample1.txt') == 8
+    # assert run('sample2.txt') == 86
+    # assert run('sample3.txt') == 132
     # assert run('sample4.txt') == 136
     # assert run('sample5.txt') == 81
+    print(run("input.txt"))
