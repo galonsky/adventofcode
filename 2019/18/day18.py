@@ -1,32 +1,6 @@
 import math
-from dataclasses import dataclass
 from typing import List, Tuple, Set, Dict
 from collections import deque
-
-
-class Node:
-    def __init__(self, id: str, x: int, y: int, keys: Set[str] = None, distance: int = 0):
-        self.id = id
-        self.x = x
-        self.y = y
-        if not keys:
-            keys = set()
-        self.keys = keys
-        self.children = {}
-        self.distance = distance
-
-    def add_child(self, node, distance):
-        self.children[node] = distance
-
-    def __hash__(self) -> int:
-        return hash(self.id)
-
-    def __eq__(self, other):
-        return self.id == other.id
-
-    def __repr__(self):
-        return f"{self.id} @ ({self.x}, {self.y})"
-
 
 
 def get_input(filename: str) -> List[str]:
@@ -37,110 +11,98 @@ def get_input(filename: str) -> List[str]:
     return lines
 
 
-def find_char(map: List[str], char: str) -> Tuple[int, int]:
+# some help from https://repl.it/@joningram/AOC-2019 here
+def get_dist_map(x: int, y: int, map: List[str]) -> Dict[str, Tuple[int, str]]:
+    dist_map = {}
+    visited = set()
+    visited.add((x, y))
+    queue = deque([(x, y, "", 0)])
+
+    while queue:
+        x, y, route, distance = queue.pop()
+        ch = map[y][x]
+        if ch.isalpha() and distance > 0:
+            dist_map[ch] = (distance, route)
+            route += ch
+        visited.add((x, y))
+        for d in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            newx, newy = x + d[0], y + d[1]
+            if map[newy][newx] != '#' and (newx, newy) not in visited:
+                queue.appendleft((newx, newy, route, distance + 1))
+    return dist_map
+
+
+def precalc_distances(map: List[str]) -> Dict[str, Dict[str, Tuple[int, str]]]:
+    distance_maps = {}
     for y, line in enumerate(map):
         for x, ch in enumerate(line):
-            if ch == char:
-                return x, y
-    raise Exception
+            if ch.islower() or ch == '@':
+                dist_map = get_dist_map(x, y, map)
+                distance_maps[ch] = dist_map
+    return distance_maps
 
 
-def find_keys(
-        x: int, y: int, map: List[str], have_keys: Set[str], distance: int, visited: Set[Tuple[int, int]]
-) -> List[Tuple[str, int, int, int]]:
-    if (x, y) in visited:
-        return []
-    visited.add((x, y))
-    if y < 0 or y >= len(map) or x < 0 or x >= len(map[0]):
-        return []
-    if map[y][x] == '#':
-        return []
-
-    found = []
-    char = map[y][x]
-    if char.islower() and char not in have_keys:
-        found.append((char, distance, x, y))
-    elif char.isupper():
-        if char.lower() not in have_keys:
-            return []
-
-    return (
-        found
-        + find_keys(x-1, y, map, have_keys, distance + 1, visited)
-        + find_keys(x + 1, y, map, have_keys, distance + 1, visited)
-        + find_keys(x, y-1, map, have_keys, distance + 1, visited)
-        + find_keys(x, y+1, map, have_keys, distance + 1, visited)
-    )
+# def print_graph(root: Node):
+#     newline = Node('\n', 0, 0)
+#     queue = deque([(root, 0), (newline, 0)])
+#     while queue:
+#         node, distance = queue.popleft()
+#         if node == newline:
+#             print()
+#             if queue:
+#                 queue.append((newline, 0))
+#         else:
+#             print(f"{node} - {distance}", end=' || ')
+#             for child, distance in node.children.items():
+#                 queue.append((child, distance))
 
 
-def print_graph(root: Node):
-    newline = Node('\n', 0, 0)
-    queue = deque([(root, 0), (newline, 0)])
-    while queue:
-        node, distance = queue.popleft()
-        if node == newline:
-            print()
-            if queue:
-                queue.append((newline, 0))
-        else:
-            print(f"{node} - {distance}", end=' || ')
-            for child, distance in node.children.items():
-                queue.append((child, distance))
+# big help from https://old.reddit.com/r/adventofcode/comments/ec8090/2019_day_18_solutions/fbd8y0b/
+def distance_to_get_keys(cur: str, distance_maps: Dict[str, Dict[str, Tuple[int, str]]], keys: Set[str], cache: Dict[Tuple[str, int, int], int]) -> int:
+    if not keys:
+        return 0
+
+    cache_key = (''.join(sorted(list(keys))), cur)
+    if cache_key in cache:
+        return cache[cache_key]
+
+    result = math.inf
+    current_keys = distance_maps.keys() - keys
+    reachable_keys = {
+        k for k in keys
+        if all((c in current_keys or c.lower() in current_keys for c in list(distance_maps[cur][k][1])))
+    }
+    for key in reachable_keys:
+        distance = distance_maps[cur][key][0]
+        new_distance = distance + distance_to_get_keys(key, distance_maps, keys - {key}, cache)
+        result = min(result, new_distance)
+
+    cache[cache_key] = result
+    return result
 
 
-def generate_graph(map: List[str]):
-    start_x, start_y = find_char(map, '@')
-    # print(start_x, start_y)
-    nodes_created = 0
-
-    min_distance_by_keys: Dict[Tuple[str, int, int], int] = {}
-
-    min_distance = math.inf
-
-    root = Node(id="root", x=start_x, y=start_y)
-    queue = deque([root])
-    while queue:
-        current = queue.popleft()
-        print(current.keys)
-        found_keys = find_keys(current.x, current.y, map, current.keys, 0, set())
-        # print(found_keys)
-        if not found_keys:
-            # print(f"last! {current} {current.distance}")
-            # if current.distance < min_distance:
-            #     min_distance = current.distance
-            dict_key = (''.join(sorted(list(current.keys))), current.x, current.y)
-            return min_distance_by_keys[dict_key]
-        for (key, distance, x, y) in found_keys:
-            new_keys = set(current.keys)
-            new_keys.add(key)
-            new_distance = current.distance + distance
-
-            dict_key = (''.join(sorted(list(new_keys))), x, y)
-            if dict_key not in min_distance_by_keys or new_distance < min_distance_by_keys[dict_key]:
-                min_distance_by_keys[dict_key] = new_distance
-
-                new_node = Node(key, x, y, new_keys, distance=new_distance)
-                current.add_child(new_node, distance)
-                queue.append(new_node)
-            # nodes_created += 1
-            # print(nodes_created)
-
-    # print_graph(root)
-    return min_distance
-
-
-
-
+def get_all_keys(map: List[str]) -> Set[str]:
+    all_keys = set()
+    for line in map:
+        for ch in line:
+            if ch.islower():
+                all_keys.add(ch)
+    return all_keys
 
 
 def run(filename: str):
-    return generate_graph(get_input(filename))
+    map = get_input(filename)
+    all_keys = get_all_keys(map)
+    distance_maps = precalc_distances(map)
+
+    return distance_to_get_keys("@", distance_maps, all_keys, {})
 
 
 if __name__ == "__main__":
-    # assert run('sample1.txt') == 8
-    # assert run('sample2.txt') == 86
-    # assert run('sample3.txt') == 132
-    # assert run('sample4.txt') == 136
-    # assert run('sample5.txt') == 81
-    print(run("input.txt"))
+    # run('sample1.txt')
+    assert run('sample1.txt') == 8
+    assert run('sample2.txt') == 86
+    assert run('sample3.txt') == 132
+    assert run('sample4.txt') == 136
+    assert run('sample5.txt') == 81
+    assert run("input.txt") == 5262
