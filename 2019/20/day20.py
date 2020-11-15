@@ -73,11 +73,11 @@ def invert(coords_by_portals: Dict[str, List[Tuple[int, int]]]) -> Dict[Tuple[in
 
 
 def get_dist_map(
-        x: int,
-        y: int,
-        maze: List[str],
-        portals_by_coords: Dict[Tuple[int, int], str],
-        coords_by_portals: Dict[str, List[Tuple[int, int]]],
+    x: int,
+    y: int,
+    maze: List[str],
+    portals_by_coords: Dict[Tuple[int, int], str],
+    coords_by_portals: Dict[str, List[Tuple[int, int]]],
 ) -> Dict[str, int]:
     dist_map = {}
     visited = set()
@@ -101,6 +101,52 @@ def get_dist_map(
     return dist_map
 
 
+def is_outer(x: int, y: int, maze: List[str]) -> bool:
+    height = len(maze)
+    width = len(maze[y])
+    return (
+        x == 2
+        or y == 2
+        or x == width - 3
+        or y == height - 3
+    )
+
+
+def get_dist_map_recursive(
+    x: int,
+    y: int,
+    maze: List[str],
+    portals_by_coords: Dict[Tuple[int, int], str],
+    coords_by_portals: Dict[str, List[Tuple[int, int]]],
+) -> Dict[str, int]:
+    dist_map = {}
+    visited_by_level = defaultdict(set)
+    visited_by_level[0].add((x, y))
+    queue = deque([(x, y, 0, 0)])
+
+    while queue:
+        x, y, distance, level = queue.pop()
+        print(level)
+        portal = portals_by_coords.get((x, y))
+        if portal and 0 < distance < dist_map.get(portal, math.inf):
+            if portal != 'ZZ' or level == 0:
+                dist_map[portal] = distance
+                if portal == 'ZZ':
+                    return dist_map
+        visited_by_level[level].add((x, y))
+        for d in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            newx, newy = x + d[0], y + d[1]
+            if maze[newy][newx] == '.' and (newx, newy) not in visited_by_level[level]:
+                queue.appendleft((newx, newy, distance + 1, level))
+        if portal and len(coords_by_portals[portal]) == 2:
+            other_coord = [coord for coord in coords_by_portals[portal] if coord != (x, y)][0]
+            outer = is_outer(x, y, maze)
+            new_level = level - 1 if outer else level + 1
+            if other_coord not in visited_by_level[new_level] and not (outer and level == 0):
+                queue.appendleft((other_coord[0], other_coord[1], distance + 1, new_level))
+    return dist_map
+
+
 if __name__ == '__main__':
     maze = load_maze('input.txt')
     coords_by_portal = find_portals(maze)
@@ -110,5 +156,6 @@ if __name__ == '__main__':
     # print(portals_by_coords)
 
     aa_coord = coords_by_portal['AA'][0]
-    print(get_dist_map(aa_coord[0], aa_coord[1], maze, portals_by_coords, coords_by_portal)['ZZ'])
+    # print(get_dist_map(aa_coord[0], aa_coord[1], maze, portals_by_coords, coords_by_portal)['ZZ'])
+    print(get_dist_map_recursive(aa_coord[0], aa_coord[1], maze, portals_by_coords, coords_by_portal)['ZZ'])
 
