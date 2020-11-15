@@ -109,8 +109,6 @@ if __name__ == '__main__':
     # print(coords_by_portal)
     # print(portals_by_coords)
 
-    for portal in coords_by_portal:
-        coords_list = coords_by_portal[portal]
-        for i, coords in enumerate(coords_list):
-            dist_map = get_dist_map(coords[0], coords[1], maze, portals_by_coords, coords_by_portal)
-            print(f'Dist map for portal {portal} {i}: {dist_map}')
+    aa_coord = coords_by_portal['AA'][0]
+    print(get_dist_map(aa_coord[0], aa_coord[1], maze, portals_by_coords, coords_by_portal)['ZZ'])
+
