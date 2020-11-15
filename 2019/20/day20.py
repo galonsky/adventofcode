@@ -1,4 +1,5 @@
-from collections import defaultdict
+import math
+from collections import defaultdict, deque
 from typing import List, Dict, Tuple, Callable, Optional
 
 
@@ -63,6 +64,53 @@ def find_portals(maze: List[str]) -> Dict[str, List[Tuple[int, int]]]:
     return dict(portals)
 
 
+def invert(coords_by_portals: Dict[str, List[Tuple[int, int]]]) -> Dict[Tuple[int, int], str]:
+    portals_by_coord = {}
+    for portal, coords_list in coords_by_portals.items():
+        for coord in coords_list:
+            portals_by_coord[coord] = portal
+    return portals_by_coord
+
+
+def get_dist_map(
+        x: int,
+        y: int,
+        maze: List[str],
+        portals_by_coords: Dict[Tuple[int, int], str],
+        coords_by_portals: Dict[str, List[Tuple[int, int]]],
+) -> Dict[str, int]:
+    dist_map = {}
+    visited = set()
+    visited.add((x, y))
+    queue = deque([(x, y, 0)])
+
+    while queue:
+        x, y, distance = queue.pop()
+        portal = portals_by_coords.get((x, y))
+        if portal and distance > 0 and distance < dist_map.get(portal, math.inf):
+            dist_map[portal] = distance
+        visited.add((x, y))
+        for d in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            newx, newy = x + d[0], y + d[1]
+            if maze[newy][newx] == '.' and (newx, newy) not in visited:
+                queue.appendleft((newx, newy, distance + 1))
+        if portal and len(coords_by_portals[portal]) == 2:
+            other_coord = [coord for coord in coords_by_portals[portal] if coord != (x, y)][0]
+            if other_coord not in visited:
+                queue.appendleft((other_coord[0], other_coord[1], distance + 1))
+    return dist_map
+
+
 if __name__ == '__main__':
-    maze = load_maze('sample1.txt')
-    print(find_portals(maze))
+    maze = load_maze('input.txt')
+    coords_by_portal = find_portals(maze)
+    portals_by_coords = invert(coords_by_portal)
+
+    # print(coords_by_portal)
+    # print(portals_by_coords)
+
+    for portal in coords_by_portal:
+        coords_list = coords_by_portal[portal]
+        for i, coords in enumerate(coords_list):
+            dist_map = get_dist_map(coords[0], coords[1], maze, portals_by_coords, coords_by_portal)
+            print(f'Dist map for portal {portal} {i}: {dist_map}')
