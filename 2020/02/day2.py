@@ -14,6 +14,9 @@ class PasswordRule:
     def validate(self, password: str) -> bool:
         return self.min_letters <= password.count(self.letter) <= self.max_letters
 
+    def validate2(self, password: str) -> bool:
+        return (password[self.min_letters - 1] == self.letter) != (password[self.max_letters - 1] == self.letter)
+
 
 def get_input(filename: str) -> Iterable[str]:
     with open(filename, 'r') as file:
@@ -35,6 +38,6 @@ if __name__ == '__main__':
     for line in input:
         rule, password = parse_line(line)
         # print(rule, password)
-        if rule.validate(password):
+        if rule.validate2(password):
             num_valid += 1
     print(num_valid)
