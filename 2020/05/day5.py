@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, List, Optional
 
 
 def get_seat_id(boarding_pass: str) -> int:
@@ -16,12 +16,32 @@ def get_input(filename: str) -> Iterable[str]:
             yield line.rstrip()
 
 
-if __name__ == '__main__':
-    # print(get_seat_id('BFFFBBFRRR'))
-    # print(get_seat_id('FFFBBBFRRR'))
-    # print(get_seat_id('BBFFBBFRLL'))
+def part1():
     highest = 0
     for passport in get_input('input.txt'):
         highest = max(highest, get_seat_id(passport))
     print(highest)
+
+
+def part2():
+    passports = list(get_input('input.txt'))
+    ids = [get_seat_id(passp) for passp in passports]
+    ids.sort()
+    print(ids)
+
+    last_id = ids[0]
+    for i in range(1, len(ids)):
+        id = ids[i]
+        if id != last_id + 1:
+            # means we're the one after our seat
+            print(id-1)
+            return
+        last_id = id
+
+
+if __name__ == '__main__':
+    # print(get_seat_id('BFFFBBFRRR'))
+    # print(get_seat_id('FFFBBBFRRR'))
+    # print(get_seat_id('BBFFBBFRLL'))
+    part2()
 
