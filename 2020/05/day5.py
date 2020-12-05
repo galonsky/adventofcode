@@ -39,9 +39,25 @@ def part2():
         last_id = id
 
 
+def part2v2():
+    """
+    Slightly better, N instead of NLOGN
+    :return:
+    """
+    passports = list(get_input('input.txt'))
+    all_ids = {get_seat_id(bpass) for bpass in passports}
+    first_id = min(all_ids)
+    last_id = max(all_ids)
+
+    for i in range(first_id, last_id + 1):
+        if i not in all_ids:
+            print(i)
+            return
+
+
 if __name__ == '__main__':
     # print(get_seat_id('BFFFBBFRRR'))
     # print(get_seat_id('FFFBBBFRRR'))
     # print(get_seat_id('BBFFBBFRLL'))
-    part2()
+    part2v2()
 
