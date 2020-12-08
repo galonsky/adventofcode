@@ -44,5 +44,21 @@ def part1():
             total_with_gold += 1
     print(total_with_gold)
 
+
+def get_num_bags_inside(bag_name: str, rule_map: Dict[str, List[Tuple[str, int]]]) -> int:
+    stuff_in_this_bag = {pair: num for pair, num in rule_map.get(bag_name, [])}
+    if not stuff_in_this_bag:
+        return 0
+    total_children = 0
+    for child, num in stuff_in_this_bag.items():
+        total_children += num * get_num_bags_inside(child, rule_map)
+    return total_children + sum(stuff_in_this_bag.values())
+
+
+def part2():
+    rule_map = get_rule_map('input.txt')
+    # pprint.pp(rule_map)
+    print(get_num_bags_inside('shiny gold bag', rule_map))
+
 if __name__ == '__main__':
-    part1()
+    part2()
