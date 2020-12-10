@@ -29,5 +29,24 @@ def part1():
         window_set.add(num)
 
 
+def part2():
+    target = 1721308972
+    nums = iter(get_input('input.txt'))
+    window = deque()
+    sum = 0
+    while nums:
+        if sum == target:
+            return min(window) + max(window)
+        elif sum < target:
+            # make window bigger
+            next_num = next(nums)
+            window.append(next_num)
+            sum += next_num
+        else:
+            # make window smaller
+            removed = window.popleft()
+            sum -= removed
+
+
 if __name__ == '__main__':
-    print(part1())
+    print(part2())
