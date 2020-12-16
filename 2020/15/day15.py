@@ -30,5 +30,5 @@ def play_game(starting_nums: Iterable[int], num_turns: int) -> int:
 
 
 if __name__ == '__main__':
-    print(play_game([14,3,1,0,9,5], 2020))
+    print(play_game([14,3,1,0,9,5], 30000000))
 
