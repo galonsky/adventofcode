@@ -15,13 +15,7 @@ def evaluate_expression(expression: str) -> int:
     num_open_groups = 0
     while True:
         if len(stack) >= 3 and num_open_groups == 0:
-            operand1 = stack.popleft()
-            operator = stack.popleft()
-            operand2 = stack.popleft()
-            if operator == '+':
-                stack.appendleft(int(operand1) + int(operand2))
-            else:
-                stack.appendleft(int(operand1) * int(operand2))
+            pop_three(stack)
         try:
             next_char = next(characters)
             if next_char == '(':
@@ -36,13 +30,7 @@ def evaluate_expression(expression: str) -> int:
                     last_char = stack.pop()
 
                 while len(paren_stack) > 1:
-                    operand1 = paren_stack.popleft()
-                    operator = paren_stack.popleft()
-                    operand2 = paren_stack.popleft()
-                    if operator == '+':
-                        paren_stack.appendleft(int(operand1) + int(operand2))
-                    else:
-                        paren_stack.appendleft(int(operand1) * int(operand2))
+                    pop_three(paren_stack)
                 stack.append(paren_stack.pop())
 
                 num_open_groups -= 1
@@ -52,6 +40,16 @@ def evaluate_expression(expression: str) -> int:
 
         except StopIteration:
             return stack.pop()
+
+
+def pop_three(stack):
+    operand1 = stack.popleft()
+    operator = stack.popleft()
+    operand2 = stack.popleft()
+    if operator == '+':
+        stack.appendleft(int(operand1) + int(operand2))
+    else:
+        stack.appendleft(int(operand1) * int(operand2))
 
 
 def part1():
