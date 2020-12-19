@@ -53,6 +53,7 @@ def part1():
     rules = parse_rules('input_rules.txt')
     strs = get_test_strs('input_strs.txt')
     possibilities = get_possibilities_for_rule(0, rules)
+    print(len(possibilities))
     total = 0
     for test_str in strs:
         if test_str in possibilities:
@@ -60,5 +61,43 @@ def part1():
     print(total)
 
 
+def part2():
+    rules = parse_rules('input_rules.txt')
+    strs = list(get_test_strs('input_strs.txt'))
+    poss31 = get_possibilities_for_rule(31, rules)
+    poss42 = get_possibilities_for_rule(42, rules)
+
+    # base rule (0) is 8, 11 so
+    # all answers are some 1+ repetition of 42 followed by (42){n}(31){n}
+    # (42)+(42){n}(31){n} where n >= 1
+
+    print(poss31)
+    print(poss42)
+
+    pattern_size = len(next(iter(poss31)))
+
+    total = 0
+    for test_str in strs:
+        rest = test_str
+        num_42s = 0
+        while(any(
+            rest.startswith(poss) for poss in poss42
+        )):
+            rest = rest[pattern_size:]
+            num_42s += 1
+        if len(rest) == len(test_str):
+            continue  # did not start with a 42
+        num_31s = 0
+        while(any(
+            rest.startswith(poss) for poss in poss31
+        )):
+            rest = rest[pattern_size:]
+            num_31s += 1
+        if len(rest) == 0 and num_31s >= 1 and num_42s >= 2 and num_42s >= num_31s + 1:
+            print(test_str, num_42s, num_31s)
+            total += 1
+    print(total)
+
+
 if __name__ == '__main__':
-    part1()
+    part2()
