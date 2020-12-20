@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from functools import reduce
 from math import sqrt
@@ -44,18 +45,6 @@ def all_full_flips(tile: List[str]) -> Iterable[List[str]]:
     yield flip_vert(horiz)
 
 
-def rotate(edges: List[str], n: int) -> List[str]:
-    new_edges = edges
-    for _ in range(n):
-        new_edges = [
-            new_edges[3][::-1],
-            new_edges[0],
-            new_edges[1][::-1],
-            new_edges[2],
-        ]
-    return new_edges
-
-
 def get_edges(tile: List[str]) -> List[str]:
     """
     N E S W, left to right and top to bottom
@@ -66,36 +55,6 @@ def get_edges(tile: List[str]) -> List[str]:
         tile[-1],
         ''.join([line[0] for line in tile]),
     ]
-
-
-def all_flips(edges: List[str]) -> Iterable[List[str]]:
-    yield edges
-    horizontal = [
-        edges[0][::-1],
-        edges[3],
-        edges[2][::-1],
-        edges[1],
-    ]
-    yield horizontal
-    yield [
-        edges[3],
-        edges[1][::-1],
-        edges[0],
-        edges[2][::-1],
-    ]
-    yield [
-        horizontal[3],
-        horizontal[1][::-1],
-        horizontal[0],
-        horizontal[2][::-1],
-    ]
-
-
-def all_permutations(edges: List[str]) -> Iterable[List[str]]:
-    for i in range(4):
-        rotated = rotate(edges, i)
-        yield from all_flips(rotated)
-
 
 def all_full_permutations(tile: List[str]) -> Iterable[List[str]]:
     for i in range(4):
@@ -132,8 +91,50 @@ def part1():
     return reduce(mul, corner_tiles)
 
 
+def remove_edges(tile: List[str]) -> List[str]:
+    return [
+        tile[y][1:-1] for y in range(1, len(tile) - 1)
+    ]
+
+
+def remove_edges_and_stitch_together(puzzle: Dict[Tuple[int, int], Tuple[int, List[str]]], side_len: int) -> List[str]:
+    trimmed_tiles = {
+        key: remove_edges(puzzle[key][1]) for key in puzzle
+    }
+    rows = []
+    for tile_y in range(side_len):
+        for row_i in range(len(trimmed_tiles[(0, 0)])):
+            row = ''
+            for tile_x in range(side_len):
+                row_segment = trimmed_tiles[(tile_x, tile_y)][row_i]
+                row += row_segment
+            rows.append(row)
+    return rows
+
+
+def find_sea_monsters(puzzle: List[str]) -> int:
+    middle_pattern = re.compile(r'#.{4}##.{4}##.{4}###')
+    bottom_pattern = re.compile(r'#.{2}#.{2}#.{2}#.{2}#.{2}#')  # needs to be middle offset + 1
+    # above middle has to have # at offset + 18
+    num_monsters = 0
+    for i, line in enumerate(puzzle):
+        offset = 0
+        match = middle_pattern.search(line)
+        while match:
+            offset += match.start()
+            if (
+                bottom_pattern.match(puzzle[i+1][offset+1:])
+                and puzzle[i-1][offset + 18] == '#'
+            ):
+                num_monsters += 1
+            match = middle_pattern.search(line[offset + 1:])
+            offset += 1
+
+    return num_monsters
+
+
 def part2():
-    tiles = get_tiles('sample1.txt')
+    tiles = get_tiles('input.txt')
     tile_ids_by_edges = defaultdict(set)
     edges_by_tile_id = defaultdict(set)
 
@@ -160,27 +161,14 @@ def part2():
         if count == 2:
             corner_tiles.append(tile_id)
 
-
-    # print(corner_tiles)
-    # expected_edges_by_corner = [
-    #     {1, 2},
-    #     {0, 1},
-    #     {1, 2},
-    #     {2, 3},
-    # ]
-
-    # orient corners
-    # then should be able to find tiles on their edges
-
     top_left_corner = corner_tiles[0]
-    # top_left_corner = 1951
     corner_permutation_tile = None
     for permutation_tile in all_full_permutations(tiles[top_left_corner]):
         permutation_edges = get_edges(permutation_tile)
         if all(
             len(tile_ids_by_edges[edge]) == 2
             for i, edge in enumerate(permutation_edges)
-            if i in (1, 2)
+            if i in (1, 2)  # right and down
         ):
             corner_permutation_tile = permutation_tile
             break
@@ -224,8 +212,7 @@ def part2():
                         perm_tile for perm_tile in all_full_permutations(tiles[new_id])
                         if get_edges(perm_tile)[opposite_permutation_index[i]] == edge
                     ]
-                    # if len(possible_permutations) != 1:
-                    #     raise Exception
+
                     new_tile = possible_tiles[0]
                     puzzle[(new_x, new_y)] = (new_id, new_tile)
     for y in range(side_len):
@@ -240,7 +227,19 @@ def part2():
             print()
         print()
 
+    trimmed_puzzle = remove_edges_and_stitch_together(puzzle, side_len)
+    for perm in all_full_permutations(trimmed_puzzle):
+        num_monsters = find_sea_monsters(perm)
+        if num_monsters > 0:
+            num_pounds = sum([
+                line.count('#') for line in perm
+            ])
+            return num_pounds - num_monsters * 15
+        # for row in perm:
+        #     print(row)
+        # print()
 
 
 if __name__ == '__main__':
+    print(part1())
     print(part2())
