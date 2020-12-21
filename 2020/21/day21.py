@@ -24,10 +24,28 @@ def get_recipes(filename: str) -> Iterable[Recipe]:
 
 def part1():
     recipes = list(get_recipes('input.txt'))
+    ingredient_to_allergen = get_ingredients_to_allergen_map(recipes)
+
+    print(ingredient_to_allergen)
+    allergen_ingredients = set(ingredient_to_allergen.keys())
+    count_non_allergens = 0
+    for recipe in recipes:
+        for ingredient in recipe.ingredients:
+            if ingredient not in allergen_ingredients:
+                count_non_allergens += 1
+    return count_non_allergens
+
+
+def part2():
+    recipes = list(get_recipes('input.txt'))
+    ingredient_to_allergen = get_ingredients_to_allergen_map(recipes)
+    return ','.join(sorted(ingredient_to_allergen.keys(), key=lambda ing: ingredient_to_allergen[ing]))
+
+
+def get_ingredients_to_allergen_map(recipes):
     all_allergens = reduce(lambda a, b: a | b, (recipe.allergens for recipe in recipes))
     ingredient_to_allergen = {}
     num_added = 1
-
     while num_added > 0:
         num_added = 0
         for allergen in all_allergens - set(ingredient_to_allergen.values()):
@@ -40,16 +58,8 @@ def part1():
             if len(ingredients_with_this_allergen) == 1:
                 ingredient_to_allergen[next(iter(ingredients_with_this_allergen))] = allergen
                 num_added += 1
-
-    print(ingredient_to_allergen)
-    allergen_ingredients = set(ingredient_to_allergen.keys())
-    count_non_allergens = 0
-    for recipe in recipes:
-        for ingredient in recipe.ingredients:
-            if ingredient not in allergen_ingredients:
-                count_non_allergens += 1
-    return count_non_allergens
+    return ingredient_to_allergen
 
 
 if __name__ == '__main__':
-    print(part1())
+    print(part2())
