@@ -12,7 +12,7 @@ def get_decks(filename: str) -> Iterable[Deque[int]]:
 
 
 def get_history_key(decks: List[Deque[int]]) -> str:
-    return ','.join(map(str, decks[0])) + '|' + ','.join(map(str, decks[0]))
+    return ','.join(map(str, decks[0])) + '|' + ','.join(map(str, decks[1]))
 
 
 def play_game(decks: List[Deque[int]]) -> int:
