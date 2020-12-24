@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Iterator
+from typing import Optional, Iterator, Dict, Tuple
 
 
 @dataclass
@@ -45,29 +45,50 @@ def build_circle(input: str) -> Cup:
     return first_cup
 
 
+def build_linked_dict(input: str) -> Tuple[int, Dict[int, int]]:
+    linked_dict = {}
+    first_cup = int(input[0])
+    last = first_cup
+    for i in range(1, len(input)):
+        label = int(input[i])
+        linked_dict[last] = label
+        last = label
+    linked_dict[last] = first_cup
+    return first_cup, linked_dict
+
+
 def part1():
-    current = build_circle("586439172")
-    # nums = [cur.label for cur in current]
+    current, linked_dict = build_linked_dict("586439172")
+    print(linked_dict)
+    max_val = max(linked_dict.keys())
     for _ in range(100):
         picked_up = [
-            current.next,
-            current.next.next,
-            current.next.next.next,
+            linked_dict[current],
+            linked_dict[linked_dict[current]],
+            linked_dict[linked_dict[linked_dict[current]]],
         ]
-        current.next = picked_up[-1].next
-        looking_for = current.label - 1
-        nums_below = [cup for cup in current if cup.label <= looking_for]
-        destination = max(nums_below, key=lambda cup: cup.label) if nums_below else max(current, key=lambda cup: cup.label)
-        gap_end = destination.next
-        destination.next = picked_up[0]
-        picked_up[-1].next = gap_end
+        linked_dict[current] = linked_dict[picked_up[-1]]
 
-        current = current.next
+        destination = current - 1
+        while destination in picked_up and destination > 0:
+            destination -= 1
+        if destination == 0:
+            destination = max_val
+            while destination in picked_up and destination > 1:
+                destination -= 1
 
-    while current.label != 1:
-        current = current.next
-    current = current.next
-    return ''.join(str(cup.label) for cup in current)[:-1]
+        # next after destination
+        gap_end = linked_dict[destination]
+        linked_dict[destination] = picked_up[0]
+        linked_dict[picked_up[-1]] = gap_end
+        current = linked_dict[current]
+
+    current = linked_dict[1]
+    nums_after_one = ''
+    while current != 1:
+        nums_after_one += str(current)
+        current = linked_dict[current]
+    return nums_after_one
 
 
 if __name__ == '__main__':
