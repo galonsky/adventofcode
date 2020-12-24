@@ -31,9 +31,14 @@ def get_direction_steps(directions: str) -> Iterable[str]:
         i += len(next_dir)
 
 
-
 def part1():
     directions = get_tile_directions('input.txt')
+    tile_colors = get_tile_colors(directions)
+
+    return len([val for val in tile_colors.values() if val])
+
+
+def get_tile_colors(directions: Iterable[str]) -> Dict[Tuple[float, float], bool]:
     tile_colors: Dict[Tuple[float, float], bool] = {}  # missing/false means white, true means black
     for direction in directions:
         x, y = 0.0, 0.0
@@ -42,8 +47,7 @@ def part1():
             x += dx
             y += dy
         tile_colors[(x, y)] = not tile_colors.get((x, y), False)
-
-    return len([val for val in tile_colors.values() if val])
+    return tile_colors
 
 
 if __name__ == '__main__':
