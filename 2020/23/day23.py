@@ -45,7 +45,7 @@ def build_circle(input: str) -> Cup:
     return first_cup
 
 
-def build_linked_dict(input: str) -> Tuple[int, Dict[int, int]]:
+def build_linked_dict(input: str, max_num: int = None) -> Tuple[int, Dict[int, int]]:
     linked_dict = {}
     first_cup = int(input[0])
     last = first_cup
@@ -53,6 +53,12 @@ def build_linked_dict(input: str) -> Tuple[int, Dict[int, int]]:
         label = int(input[i])
         linked_dict[last] = label
         last = label
+
+    if max_num:
+        for i in range(max(linked_dict.keys()) + 1, max_num + 1):
+            linked_dict[last] = i
+            last = i
+
     linked_dict[last] = first_cup
     return first_cup, linked_dict
 
@@ -91,5 +97,36 @@ def part1():
     return nums_after_one
 
 
+def part2():
+    current, linked_dict = build_linked_dict("586439172", max_num=1_000_000)
+    # print(linked_dict)
+    max_val = 1_000_000
+    for _ in range(10_000_000):
+        picked_up = [
+            linked_dict[current],
+            linked_dict[linked_dict[current]],
+            linked_dict[linked_dict[linked_dict[current]]],
+        ]
+        linked_dict[current] = linked_dict[picked_up[-1]]
+
+        destination = current - 1
+        while destination in picked_up and destination > 0:
+            destination -= 1
+        if destination == 0:
+            destination = max_val
+            while destination in picked_up and destination > 1:
+                destination -= 1
+
+        # next after destination
+        gap_end = linked_dict[destination]
+        linked_dict[destination] = picked_up[0]
+        linked_dict[picked_up[-1]] = gap_end
+        current = linked_dict[current]
+
+    after_one = linked_dict[1]
+    return after_one * linked_dict[after_one]
+
+
+
 if __name__ == '__main__':
-    print(part1())
+    print(part2())
