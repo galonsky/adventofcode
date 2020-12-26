@@ -258,6 +258,45 @@ def part1():
                         print(y)
                         return
 
+
+def part2():
+    packet_queue_by_address = defaultdict(deque)
+    program_by_address = {}
+    nat_x = 0
+    nat_y = 0
+    nat_y_packets_delivered = set()
+    for address in range(50):
+        program = Program(PROGRAM_CODE)
+        packet_queue_by_address[address].append(address)
+        program_by_address[address] = program
+    while True:
+        for address, program in program_by_address.items():
+            if packet_queue_by_address[address]:
+                next_input = packet_queue_by_address[address].popleft()
+                print(f'Address {address} getting input {next_input}')
+                result = program.run([next_input])
+            else:
+                result = program.run([-1])
+            if result.outputs:
+                for i in range(0, len(result.outputs), 3):
+                    to_address = result.outputs[i]
+                    x = result.outputs[i+1]
+                    y = result.outputs[i+2]
+                    if to_address == 255:
+                        nat_x = x
+                        nat_y = y
+                    else:
+                        packet_queue_by_address[to_address].append(x)
+                        packet_queue_by_address[to_address].append(y)
+        if all(len(q) == 0 for q in packet_queue_by_address.values()):
+            packet_queue_by_address[0].append(nat_x)
+            packet_queue_by_address[0].append(nat_y)
+            if nat_y in nat_y_packets_delivered:
+                print(nat_y)
+                return
+            nat_y_packets_delivered.add(nat_y)
+
+
 if __name__ == '__main__':
-    part1()
+    part2()
 
