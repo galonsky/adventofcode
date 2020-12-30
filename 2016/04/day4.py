@@ -29,5 +29,24 @@ def part1():
     return real_rooms
 
 
+def decrypt(encrypted: str, sector_id: int) -> str:
+    decrypted = ''
+    for ch in encrypted:
+        if ch == '-':
+            decrypted += ' '
+        else:
+            decrypted += chr((ord(ch) + sector_id - ord('a')) % 26 + ord('a'))
+    return decrypted
+
+
+def part2():
+    rooms = get_rooms('input.txt')
+    for room in rooms:
+        match = PATTERN.match(room)
+        encrypted, room_id, checksum = match.groups()
+        print(decrypt(encrypted, int(room_id)), room_id)
+
+
+
 if __name__ == '__main__':
-    print(part1())
+    part2()
