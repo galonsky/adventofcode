@@ -17,5 +17,14 @@ def part1():
     return ''.join([counter_by_position[pos].most_common(1)[0][0] for pos in sorted(counter_by_position.keys())])
 
 
+def part2():
+    words = get_input('input.txt')
+    counter_by_position = defaultdict(Counter)
+    for word in words:
+        for i, ch in enumerate(word):
+            counter_by_position[i][ch] -= 1  # just one char difference!
+    return ''.join([counter_by_position[pos].most_common(1)[0][0] for pos in sorted(counter_by_position.keys())])
+
+
 if __name__ == '__main__':
-    print(part1())
+    print(part2())
