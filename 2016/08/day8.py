@@ -29,7 +29,7 @@ def rotate_column(screen: List[List[bool]], x: int, b: int):
         screen[y][x] = new_col[y]
 
 
-def part1():
+def part1and2():
     screen = [
         [False] * 50 for _ in range(6)
     ]
@@ -52,7 +52,13 @@ def part1():
             if light:
                 num_on += 1
     print(num_on)
+    print_screen(screen)
+
+
+def print_screen(screen: List[List[bool]]):
+    for row in screen:
+        print(''.join(['#' if pixel else ' ' for pixel in row]))
 
 
 if __name__ == '__main__':
-    part1()
+    part1and2()
