@@ -38,9 +38,9 @@ def part1():
             low = min(chips_by_bot[bot])
             high = max(chips_by_bot[bot])
 
-            if low == 17 and high == 61:
-                print(bot)
-                return
+            # if low == 17 and high == 61:
+            #     print(bot)
+            #     return
 
             low_type, low_dest = low_rules
             if low_type == 'bot':
@@ -55,7 +55,7 @@ def part1():
                 chips_by_output[high_dest].add(high)
             chips_by_bot[bot] = set()
         bots_with_two_chips = {key for key in chips_by_bot.keys() if len(chips_by_bot[key]) == 2}
-    print(chips_by_output)
+    print(list(chips_by_output[0])[0] * list(chips_by_output[1])[0] * list(chips_by_output[2])[0])
 
 
 if __name__ == '__main__':
