@@ -78,6 +78,7 @@ class Program:
     memory: dict[str, int] = field(default_factory=lambda: defaultdict(int))
 
     def run(self):
+        self.memory["c"] = 1
         while 0 <= self.pc < len(self.instructions):
             inst = self.instructions[self.pc]
             handler = HANDLERS[inst.command]
