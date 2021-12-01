@@ -43,7 +43,7 @@ VECTORS = [
 ]
 
 
-def find_shortest_path(map: Map, target_x: int, target_y: int) -> int:
+def find_shortest_path(map: Map, target_x: int, target_y: int) -> tuple[int, dict[tuple[int, int], int]]:
     dist: dict[tuple[int, int], int] = {}
     x = 1
     y = 1
@@ -55,7 +55,7 @@ def find_shortest_path(map: Map, target_x: int, target_y: int) -> int:
         x, y = coord
         queue.remove(coord)
         if x == target_x and y == target_y:
-            return dist[(x, y)]
+            return dist[(x, y)], dist
 
         for dx, dy in VECTORS:
             new_x = x + dx
@@ -85,5 +85,7 @@ def print_map(max_x: int, max_y: int):
 
 if __name__ == "__main__":
     map = Map(40, 40)
-    print(find_shortest_path(map, 31, 39))
+    shortest, dist =find_shortest_path(map, 31, 39)
+
+    print(len([c for c, d in dist.items() if d <= 50]))
 
