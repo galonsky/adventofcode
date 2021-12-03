@@ -37,5 +37,49 @@ def get_power_consumption(report_nums: Iterable[str]) -> int:
     return gamma_rate * epsilon_rate
 
 
+def get_life_support_rating(report_nums: Iterable[str]) -> int:
+    oxygen_nums = set(report_nums)
+    co2_nums = set(oxygen_nums)
+
+    pos = 0
+    while True:
+        if len(oxygen_nums) == 1 and len(co2_nums) == 1:
+            return int(next(iter(oxygen_nums)), 2) * int(next(iter(co2_nums)), 2)
+        ox_counts = defaultdict(int)
+        co2_counts = defaultdict(int)
+        one_nums = set()
+        zero_nums = set()
+        if len(oxygen_nums) > 1:
+            for num in oxygen_nums:
+                ch = num[pos]
+                ox_counts[ch] += 1
+                if ch == "0":
+                    zero_nums.add(num)
+                else:
+                    one_nums.add(num)
+            one_most_common = ox_counts.get("1", 0) >= ox_counts.get("0", 0)
+            if one_most_common:
+                oxygen_nums -= zero_nums
+            else:
+                oxygen_nums -= one_nums
+
+        if len(co2_nums) > 1:
+            for num in co2_nums:
+                ch = num[pos]
+                co2_counts[ch] += 1
+                if ch == "0":
+                    zero_nums.add(num)
+                else:
+                    one_nums.add(num)
+            zero_least_common = co2_counts.get("0", 0) <= co2_counts.get("1", 0)
+            if zero_least_common:
+                co2_nums -= one_nums
+            else:
+                co2_nums -= zero_nums
+        pos += 1
+
+
+
 if __name__ == '__main__':
-    print(get_power_consumption(get_input("input.txt")))
+    # print(get_power_consumption(get_input("input.txt")))
+    print(get_life_support_rating(get_input("input.txt")))
