@@ -7,6 +7,7 @@ from typing import Iterable
 @dataclass
 class Board:
     grid: list[list[int]]
+    already_won: bool = False
 
     @cached_property
     def winning_sets(self) -> list[set[int]]:
@@ -21,8 +22,11 @@ class Board:
     def all_numbers(self) -> Iterable[int]:
         return chain.from_iterable(self.grid)
 
-    def has_won(self, called_numbers: set[int]) -> bool:
-        return any(win_set <= called_numbers for win_set in self.winning_sets)
+    def evaluate_win(self, called_numbers: set[int]) -> bool:
+        won = any(win_set <= called_numbers for win_set in self.winning_sets)
+        if won:
+            self.already_won = True
+        return won
 
     def calculate_score(self, called_numbers: set[int], winning_number: int) -> int:
         unmarked_sum = 0
@@ -32,10 +36,10 @@ class Board:
         return unmarked_sum * winning_number
 
 
-def get_numbers_and_boards(filename: str) -> tuple[Iterable[int], Iterable[Board]]:
+def get_numbers_and_boards(filename: str) -> tuple[list[int], list[Board]]:
     with open(filename, 'r') as file:
         lines = file.readlines()
-        numbers = map(int, lines[0].split(","))
+        numbers = list(map(int, lines[0].split(",")))
         boards = []
         grid = None
         for line in lines[1:]:
@@ -49,15 +53,30 @@ def get_numbers_and_boards(filename: str) -> tuple[Iterable[int], Iterable[Board
         return numbers, boards
 
 
-def get_winning_score(numbers: Iterable[int], boards: Iterable[Board]) -> int:
+def get_first_winning_score(numbers: Iterable[int], boards: Iterable[Board]) -> int:
     called_numbers = set()
     for number in numbers:
         called_numbers.add(number)
         for board in boards:
-            if board.has_won(called_numbers):
+            if board.evaluate_win(called_numbers):
                 return board.calculate_score(called_numbers, number)
+
+
+def get_last_winning_score(numbers: Iterable[int], boards: Iterable[Board]) -> int:
+    called_numbers = set()
+    last_winner_score = None
+    for number in numbers:
+        called_numbers.add(number)
+        for board in boards:
+            if not board.already_won and board.evaluate_win(called_numbers):
+                last_winner_score = board.calculate_score(called_numbers, number)
+
+    return last_winner_score
 
 
 if __name__ == '__main__':
     numbers, boards = get_numbers_and_boards("input.txt")
-    print(get_winning_score(numbers, boards))
+    print(get_first_winning_score(numbers, boards))
+    print(get_last_winning_score(numbers, boards))
+
+    # 3724 too low
