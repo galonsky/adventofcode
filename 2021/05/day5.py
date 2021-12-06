@@ -46,10 +46,42 @@ def num_points_that_overlap(lines: Iterable[tuple[Point, Point]]) -> int:
         for i in range(y0, y1 + 1):
             num_per_point[(x, i)] += 1
 
-    # print(num_per_point)
+    return len([val for val in num_per_point.values() if val >= 2])
+
+
+def num_points_that_overlap_diag(lines: Iterable[tuple[Point, Point]]) -> int:
+    lines = list(lines)
+    horiz_lines = [line for line in lines if is_horiz(*line)]
+    num_per_point = defaultdict(int)
+    for line in horiz_lines:
+        y = line[0].y
+        x0, x1 = tuple(sorted([line[0].x, line[1].x]))
+        for i in range(x0, x1 + 1):
+            num_per_point[(i, y)] += 1
+
+    vert_lines = [line for line in lines if is_vert(*line)]
+    for line in vert_lines:
+        x = line[0].x
+        y0, y1 = tuple(sorted([line[0].y, line[1].y]))
+        for i in range(y0, y1 + 1):
+            num_per_point[(x, i)] += 1
+
+    diag_lines = [line for line in lines if not is_vert(*line) and not is_horiz(*line)]
+    for line in diag_lines:
+        left, right = tuple(sorted([line[0], line[1]], key=lambda line: line.x))
+        if right.y > left.y:
+            dy = 1
+        else:
+            dy = -1
+
+        for i in range(right.x - left.x + 1):
+            x = left.x + i
+            y = left.y + dy * i
+            num_per_point[(x, y)] += 1
+
     return len([val for val in num_per_point.values() if val >= 2])
 
 
 if __name__ == '__main__':
     lines = get_lines("input.txt")
-    print(num_points_that_overlap(lines))
+    print(num_points_that_overlap_diag(lines))
