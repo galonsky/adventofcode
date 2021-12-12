@@ -52,6 +52,16 @@ def get_total_flashes(octopi: list[list[int]], n: int) -> int:
     return sum(process_step(octopi) for _ in range(n))
 
 
+def get_first_step_all_flashes(octopi: list[list[int]]) -> int:
+    n = 1
+    while True:
+        num_flashes = process_step(octopi)
+        if num_flashes == len(octopi) * len(octopi[0]):
+            return n
+        n += 1
+
+
 if __name__ == '__main__':
     octopi = list(get_octopi("input.txt"))
-    print(get_total_flashes(octopi, 100))
+    # print(get_total_flashes(octopi, 100))
+    print(get_first_step_all_flashes(octopi))
