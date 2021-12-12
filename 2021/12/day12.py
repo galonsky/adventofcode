@@ -11,16 +11,16 @@ def get_connections(filename: str) -> dict[str, set[str]]:
     return connections
 
 
-def find_all_paths(start: str, end: str, visited_small: set[str], prev_path: list[str], connections: dict[str, set[str]]) -> set[str]:
-    visited_small = set(visited_small)
+def find_all_paths(start: str, end: str, visited_small: dict[str, int], prev_path: list[str], connections: dict[str, set[str]]) -> set[str]:
+    visited_small = defaultdict(int, visited_small)
     if start.islower():
-        visited_small.add(start)
+        visited_small[start] += 1
     curr_path = prev_path + [start]
     if start == end:
         return {"-".join(curr_path)}
     ret_set = set()
     for neighbor in connections[start]:
-        if neighbor.islower() and neighbor in visited_small:
+        if neighbor.islower() and visited_small[neighbor] >= 1:
             continue
         ret_set |= find_all_paths(neighbor, end, visited_small, curr_path, connections)
     return ret_set
@@ -28,6 +28,6 @@ def find_all_paths(start: str, end: str, visited_small: set[str], prev_path: lis
 
 if __name__ == '__main__':
     connections = get_connections("input.txt")
-    paths = find_all_paths("start", "end", set(), [], connections)
+    paths = find_all_paths("start", "end", defaultdict(int), [], connections)
     print(paths)
     print(len(paths))
