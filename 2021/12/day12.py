@@ -26,8 +26,19 @@ def find_all_paths(start: str, end: str, visited_small: dict[str, int], prev_pat
     return ret_set
 
 
+def find_all_paths_with_one_special_room(connections: dict[str, set[str]]) -> set[str]:
+    uber_set = set()
+    for lower_room in (key for key in connections.keys() if key.islower() and key not in {'start', 'end'}):
+        visited_small = defaultdict(int)
+        visited_small[lower_room] = -1
+        uber_set |= find_all_paths("start", "end", visited_small, [], connections)
+    return uber_set
+
+
 if __name__ == '__main__':
     connections = get_connections("input.txt")
-    paths = find_all_paths("start", "end", defaultdict(int), [], connections)
-    print(paths)
+    # paths = find_all_paths("start", "end", defaultdict(int), [], connections)
+    # print(paths)
+    # print(len(paths))
+    paths = find_all_paths_with_one_special_room(connections)
     print(len(paths))
