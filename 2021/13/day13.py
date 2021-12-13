@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
-FOLD_PATTERN = re.compile(r'fold along ([xy])=(\d)')
+FOLD_PATTERN = re.compile(r'fold along ([xy])=(\d+)')
 
 
 class FoldHandler(ABC):
@@ -111,8 +111,8 @@ def get_num_dots_after_folds(paper: dict[tuple[int, int], bool], folds: list[Fol
 
 
 if __name__ == '__main__':
-    paper, folds = get_input("sample.txt")
+    paper, folds = get_input("input.txt")
     print(paper)
     print(folds)
-    print(get_num_dots_after_folds(paper, folds[:1]))
+    print(get_num_dots_after_folds(paper, folds))
     # 928 too high
