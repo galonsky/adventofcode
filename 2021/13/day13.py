@@ -23,12 +23,16 @@ class FoldHandler(ABC):
     def get_new_coord(self, coord: tuple[int, int], value: int) -> tuple[int, int]:
         raise NotImplementedError
 
-    def fold(self, paper: dict[tuple[int, int], bool], value: int):
+    def fold(self, paper: dict[tuple[int, int], bool], value: int) -> dict[tuple[int, int], bool]:
+        new_paper = dict(paper)
         points_below_fold = list(self.get_all_points(paper, value))
         for coord in points_below_fold:
             new_coord = self.get_new_coord(coord, value)
-            paper[coord] = False
-            paper[new_coord] = True
+            new_paper[coord] = False
+            new_paper[new_coord] = True
+        return {
+            k: v for k, v in new_paper.items() if v
+        }
 
 
 class YFoldHandler(FoldHandler):
@@ -60,9 +64,9 @@ class Fold:
     dimension: str
     value: int
 
-    def fold(self, paper: dict[tuple[int, int], bool]) -> None:
+    def fold(self, paper: dict[tuple[int, int], bool]) -> dict[tuple[int, int], bool]:
         handler = HANDLERS_BY_DIMENSION[self.dimension]
-        handler.fold(paper, self.value)
+        return handler.fold(paper, self.value)
 
 
 def get_input(filename: str) -> tuple[dict[tuple[int, int], bool], list[Fold]]:
@@ -93,7 +97,7 @@ def print_paper(paper: dict[tuple[int, int], bool]) -> None:
     for y in range(max_y + 1):
         line = ""
         for x in range(max_x + 1):
-            line += "#" if paper[(x, y)] else "."
+            line += "#" if paper.get((x, y)) else "."
         print(line)
     print()
 
@@ -101,7 +105,7 @@ def print_paper(paper: dict[tuple[int, int], bool]) -> None:
 def get_num_dots_after_folds(paper: dict[tuple[int, int], bool], folds: list[Fold]) -> int:
     print_paper(paper)
     for fold in folds:
-        fold.fold(paper)
+        paper = fold.fold(paper)
         print_paper(paper)
     return len([v for v in paper.values() if v])
 
