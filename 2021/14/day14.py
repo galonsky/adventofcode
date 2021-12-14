@@ -14,37 +14,36 @@ def get_template_and_rules(filename: str) -> tuple[str, dict[str,str]]:
         )
 
 
-def process_step(template: str, rules: dict[str, str]) -> str:
-    insertions_by_index = {}
-    for i in range(len(template) - WINDOW_SIZE + 1):
-        substr = template[i:i+WINDOW_SIZE]
-        if substr in rules:
-            insertions_by_index[i+1] = rules[substr]
-    new_template = ""
-    for i in range(len(template)):
-        if i in insertions_by_index:
-            new_template += insertions_by_index[i]
-        new_template += template[i]
-    return new_template
-
-
-def run_steps(template: str, rules: dict[str, str], n: int) -> str:
-    for _ in range(n):
-        template = process_step(template, rules)
-    return template
-
-
-def get_score(template: str) -> int:
-    counts = defaultdict(int)
+def process_counts(template: str, rules: dict[str, str], n: int) -> dict[str, int]:
+    letter_counts = defaultdict(int)
     for ch in template:
-        counts[ch] += 1
+        letter_counts[ch] += 1
+    pair_counts = count_pairs(template)
+    for _ in range(n):
+        new_pair_counts = defaultdict(int)
+        for pair, count in pair_counts.items():
+            rule = rules[pair]
+            newpair1 = pair[0] + rule
+            newpair2 = rule + pair[1]
+            new_pair_counts[newpair1] += count
+            new_pair_counts[newpair2] += count
+            letter_counts[rule] += count
+        pair_counts = new_pair_counts
+    return letter_counts
 
+
+def get_score_from_counts(counts: dict[str, int]) -> int:
     return max(counts.values()) - min(counts.values())
+
+
+def count_pairs(string: str) -> dict[str, int]:
+    pair_counts = defaultdict(int)
+    for i in range(len(string) - WINDOW_SIZE + 1):
+        pair_counts[string[i:i+WINDOW_SIZE]] += 1
+    return pair_counts
 
 
 if __name__ == '__main__':
     template, rules = get_template_and_rules("input.txt")
-    # print(template)
-    # print(rules)
-    new_template = run_steps(template, rules, 10)
-    print(get_score(new_template))
+    counts = process_counts(template, rules, 40)
+    print(get_score_from_counts(counts))
