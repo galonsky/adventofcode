@@ -1,4 +1,6 @@
 from collections import defaultdict
+from queue import PriorityQueue
+from typing import Iterable
 
 
 def get_map(filename: str) -> list[list[int]]:
@@ -16,43 +18,43 @@ def find_lowest_total_risk(cavern_map: list[list[int]]) -> int:
     dist = {}
     prev = {}
 
-    q = set()
-
+    q = PriorityQueue()
 
     for y, row in enumerate(cavern_map):
         for x, risk in enumerate(row):
             dist[(x, y)] = float("inf")
-            q.add((x, y))
+            q.put((0, (x, y)))
 
     dist[(0, 0)] = 0
     while q:
-        print(len(q))
-        u = min(q, key=lambda coord: dist[coord])
-        q.remove(u)
+        p, u = q.get()
+        if p != dist[u]:
+            continue
 
-        def is_neighbor(coord: tuple[int, int]) -> bool:
-            return (
-                u == (coord[0] + 1, coord[1])
-                or u == (coord[0], coord[1] + 1)
-                or u == (coord[0] - 1, coord[1])
-                or u == (coord[0], coord[1] - 1)
-            )
+        def neighbors() -> Iterable[tuple[int, int]]:
+            for vec in (
+                (0, 1),
+                (1, 0),
+                (-1, 0),
+                (0, -1),
+            ):
+                newx = u[0] + vec[0]
+                newy = u[1] + vec[1]
+                if 0 <= newx <= dest_x and 0 <= newy <= dest_y:
+                    yield newx, newy
+
 
         if u == (dest_x, dest_y):
             return dist[(dest_x, dest_y)]
 
-        for v in (
-            coord for coord in q if is_neighbor(coord)
-        ):
+        for v in neighbors():
             alt = dist[u] + cavern_map[v[1]][v[0]]
             if alt < dist[v]:
                 dist[v] = alt
                 prev[v] = u
+                q.put((alt, v))
 
     return dist[(dest_x, dest_y)]
-
-
-
 
 
 if __name__ == '__main__':
