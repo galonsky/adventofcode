@@ -1,4 +1,4 @@
-from _operator import add
+from _operator import add, mul
 from dataclasses import dataclass
 from functools import reduce
 from itertools import islice
@@ -47,9 +47,8 @@ def bits_to_int(bits: Iterable[int]) -> int:
     return int(reduce(
         add, map(str, bits)
     ), 2)
-# EEEEEEEE00000000DDDD44440000CCCC888822223333000066660000
-# 11101110000000001101010000001100100000100011000001100000
-# VVVTTTILLLLLLLLLLLAAAAAAAAAAABBBBBBBBBBBCCCCCCCCCCC
+
+
 def get_literal(bits: HexBitwiseIterator) -> int:
     bit_string = ""
     while True:
@@ -76,8 +75,6 @@ def get_sum_of_versions(bit_iter: HexBitwiseIterator, max_bits: int = None, max_
             version = next_bits_to_int(bit_iter, 3)
             sum_of_versions += version
             type_id = next_bits_to_int(bit_iter, 3)
-            # print(version)
-            # print(type_id)
             if type_id == 4:
                 literal = get_literal(bit_iter)
                 print(literal)
@@ -96,9 +93,56 @@ def get_sum_of_versions(bit_iter: HexBitwiseIterator, max_bits: int = None, max_
             return sum_of_versions
 
 
+def get_value(bit_iter: HexBitwiseIterator, max_bits: int = None, max_packets: int = None, aggregator: int = 0) -> int:
+    num_packets = 0
+    snapshot = bit_iter.snapshot()
+    values = []
+    while True:
+        try:
+            _version = next_bits_to_int(bit_iter, 3)
+            type_id = next_bits_to_int(bit_iter, 3)
+            if type_id == 4:
+                literal = get_literal(bit_iter)
+                values.append(literal)
+            else:
+                length_type_id = next(bit_iter)
+                if length_type_id == 0:
+                    data_length = next_bits_to_int(bit_iter, 15)
+                    values.append(get_value(bit_iter, max_bits=data_length, aggregator=type_id))
+                else:
+                    num_subpackets = next_bits_to_int(bit_iter, 11)
+                    values.append(get_value(bit_iter, max_packets=num_subpackets, aggregator=type_id))
+
+            num_packets += 1
+            if num_packets == max_packets or bit_iter.num_bits_since(snapshot) == max_bits:
+                break
+        except StopIteration:
+            break
+    match aggregator:
+        case 0:
+            return sum(values)
+        case 1:
+            return reduce(mul, values)
+        case 2:
+            return min(values)
+        case 3:
+            return max(values)
+        case 5:
+            return 1 if values[0] > values[1] else 0
+        case 6:
+            return 1 if values[0] < values[1] else 0
+        case 7:
+            return 1 if values[0] == values[1] else 0
+
+
 def get_sum(hex_string: str) -> int:
     bit_iter = HexBitwiseIterator(hex_string)
     return get_sum_of_versions(bit_iter)
+
+
+def get_final_value(hex_string: str) -> int:
+    bit_iter = HexBitwiseIterator(hex_string)
+    return get_value(bit_iter)
 
 
 if __name__ == '__main__':
@@ -114,4 +158,15 @@ if __name__ == '__main__':
     # assert get_sum("620080001611562C8802118E34") == 12
     # assert get_sum("C0015000016115A2E0802F182340") == 23
     # assert get_sum("A0016C880162017C3686B18A3D4780") == 31
-    print(get_sum(INPUT))
+    # print(get_sum(INPUT))
+
+    assert get_final_value("C200B40A82") == 3
+    assert get_final_value("04005AC33890") == 54
+    assert get_final_value("880086C3E88112") == 7
+    assert get_final_value("CE00C43D881120") == 9
+    assert get_final_value("D8005AC2A8F0") == 1
+    assert get_final_value("F600BC2D8F") == 0
+    assert get_final_value("9C005AC2F8F0") == 0
+    assert get_final_value("9C0141080250320F1802104A08") == 1
+
+    print(get_final_value(INPUT))
