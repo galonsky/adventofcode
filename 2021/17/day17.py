@@ -25,22 +25,29 @@ def does_probe_hit(vx: int, vy: int, target_x: tuple[int, int], target_y: tuple[
 
 
 def get_starting_velocity(distance: int) -> int:
+    """
+    With drag of 1, probe will travel V + V-1 + V-2 + ... + 0, which is V(V+1)/2
+    If we have the distance, we can use the quadratic formula to find starting velocity
+    """
     return ceil((-1 + sqrt(1 + 8*distance)) / 2)
 
 
-def find_max_y(target_x: tuple[int, int], target_y: tuple[int, int]) -> int:
+def find_max_y(target_x: tuple[int, int], target_y: tuple[int, int]) -> tuple[int, int]:
+    velocity_pairs = set()
     vx_min = get_starting_velocity(target_x[0])
     vx_max = get_starting_velocity(target_x[1])
+    print(vx_min, vx_max)
 
     max_y = 0
-    for vx in range(vx_min, vx_max + 1):
+    for vx in range(vx_min, 1000):  # used vx_max for part 1, but let it rip for part 2
         for vy in range(-1000, 1000):
             y = does_probe_hit(vx, vy, target_x, target_y)
             if y is not None:
                 # print(f"{vx} {vy} Reached {y}")
                 max_y = max(y, max_y)
+                velocity_pairs.add((vx, vy))
 
-    return max_y
+    return max_y, len(velocity_pairs)
 
 
 
@@ -56,3 +63,4 @@ if __name__ == '__main__':
     # print(find_max_y((20, 30), (-10, -5)))
     print(find_max_y((230, 283), (-107, -57)))
     # 1378 too low
+    # 522 too low
