@@ -1,4 +1,5 @@
 import re, functools
+from itertools import permutations
 from math import ceil
 from typing import Iterable
 
@@ -82,6 +83,10 @@ def get_magnitude(numbers: str) -> int:
     return int(numbers)
 
 
+def get_largest_magnitude(numbers: Iterable[str]) -> int:
+    return max(get_magnitude(add_and_reduce(*perm)) for perm in permutations(numbers, 2))
+
+
 if __name__ == '__main__':
     assert explode("[[[[[9,8],1],2],3],4]") == "[[[[0,9],2],3],4]"
     assert explode("[7,[6,[5,[4,[3,2]]]]]") == "[7,[6,[5,[7,0]]]]"
@@ -113,3 +118,6 @@ if __name__ == '__main__':
     assert get_magnitude(add_and_reduce(*list(get_homework("sample2.txt")))) == 4140
 
     print(get_magnitude(add_and_reduce(*list(get_homework("input.txt")))))
+
+    assert get_largest_magnitude(get_homework("sample2.txt")) == 3993
+    print(get_largest_magnitude(get_homework("input.txt")))
