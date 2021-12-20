@@ -75,10 +75,14 @@ def count_lit_pixels(image: dict[tuple[int, int], bool]) -> int:
 if __name__ == '__main__':
     algo, image = get_algo_and_image("input.txt")
     # print(algo)
-    print_image(image)
-    image = enhance(image, algo)
-    print_image(image)
-    image = enhance(image, algo, True)
-    print_image(image)
+    default = False
+    for _ in range(50):
+        image = enhance(image, algo, default)
+        default = not default
+    # print_image(image)
+    # image = enhance(image, algo)
+    # print_image(image)
+    # image = enhance(image, algo, True)
+    # print_image(image)
     print(count_lit_pixels(image))
     # 5834 too low
