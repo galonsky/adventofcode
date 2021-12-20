@@ -78,7 +78,7 @@ if __name__ == '__main__':
     print_image(image)
     image = enhance(image, algo)
     print_image(image)
-    image = enhance(image, algo)
+    image = enhance(image, algo, True)
     print_image(image)
     print(count_lit_pixels(image))
     # 5834 too low
