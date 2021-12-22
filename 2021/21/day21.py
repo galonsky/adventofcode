@@ -1,4 +1,5 @@
 from abc import ABC
+from functools import reduce, cache
 
 
 class DieValueProvider(ABC):
@@ -28,6 +29,13 @@ class Die:
         return self.value_provider.get_value()
 
 
+def get_new_position(starting_pos: int, delta: int) -> int:
+    new_position = (starting_pos + delta) % 10
+    if new_position == 0:
+        new_position = 10
+    return new_position
+
+
 def play_game(positions: list[int]) -> int:
     scores = [0 for _ in positions]
     die = Die(DeterministicValueProvider())
@@ -45,7 +53,25 @@ def play_game(positions: list[int]) -> int:
                 return loser_score * die.times_rolled
 
 
+@cache
+def num_wins(p1pos: int, p2pos: int, p1score: int, p2score: int) -> tuple[int, int]:
+    if p1score >= 21:
+        return (1, 0)
+    if p2score >= 21:
+        return (0, 1)
+
+    totals = (0, 0)
+    for d1 in range(1, 4):
+        for d2 in range(1, 4):
+            for d3 in range(1, 4):
+                p1_newpos = get_new_position(p1pos, d1 + d2 + d3)
+                p1newscore = p1score + p1_newpos
+
+                # Switching the arguments here alternates whose turn it is
+                p1_unis, p2_unis = num_wins(p2pos, p1_newpos, p2score, p1newscore)
+                totals = (totals[0] + p2_unis, totals[1] + p1_unis)
+    return totals
+
+
 if __name__ == '__main__':
-    # for i in range(1, 100):
-    #     print(i % 10 )
-    print(play_game([3, 10]))
+    print(num_wins(3, 10, 0, 0))
