@@ -241,9 +241,9 @@ def get_min_energy(config: list[tuple[str, str]]) -> int:
 
 if __name__ == '__main__':
     start = time.perf_counter()
-    get_min_energy([("B","A"), ("C", "D"), ("B", "C"), ("D", "A")])
-    # get_min_energy([("D", "B"), ("D", "A"), ("C", "B"), ("C", "A")])
+    # get_min_energy([("B","A"), ("C", "D"), ("B", "C"), ("D", "A")])
+    get_min_energy([("D", "B"), ("D", "A"), ("C", "B"), ("C", "A")])
     end = time.perf_counter()
     print(end - start)
 
-    # 16429 too high
+    # 16089 too high
