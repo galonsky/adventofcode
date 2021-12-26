@@ -67,7 +67,7 @@ class Room:
 
 @dataclass(frozen=True)
 class BoardState:
-    moves_left: frozenset[Move]
+    # moves_left: frozenset[Move]
     hallway: tuple[Optional[Amphipod]]
     rooms: tuple[Room]
 
@@ -81,7 +81,7 @@ def get_possible_move_orders(
 ) -> int:
     already_done_set = frozenset(already_done)
     cache_key = BoardState(
-        moves_left=frozenset(moves_left),
+        # moves_left=frozenset(moves_left),
         hallway=tuple(hallway),
         rooms=rooms,
     )
@@ -253,8 +253,8 @@ def get_min_energy(config: list[tuple[str, str]]) -> int:
 
 if __name__ == '__main__':
     start = time.perf_counter()
-    # get_min_energy([("B","A"), ("C", "D"), ("B", "C"), ("D", "A")])
-    get_min_energy([("D", "B"), ("D", "A"), ("C", "B"), ("C", "A")])
+    get_min_energy([("B","A"), ("C", "D"), ("B", "C"), ("D", "A")])
+    # get_min_energy([("D", "B"), ("D", "A"), ("C", "B"), ("C", "A")])
     end = time.perf_counter()
     print(end - start)
 
