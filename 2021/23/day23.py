@@ -45,15 +45,27 @@ def get_hallway_real_distance(left: int, right: int) -> int:
 """
 
 
+@dataclass(frozen=True)
+class BoardState:
+    moves_left: frozenset[Move]
+    hallway: tuple[Optional[Amphipod]]
+    room_sizes: tuple[int]
+
+
 def get_possible_move_orders(
     moves_left: set[Move],
     already_done: list[Move],
     hallway: list[Optional[Amphipod]],
-    cache: dict[tuple[frozenset[Move], tuple[Optional[Amphipod]]], int],
+    cache: dict[BoardState, int],
+    room_sizes: list[int],
     energy_so_far: int = 0,
 ) -> int:
     already_done_set = frozenset(already_done)
-    cache_key = (frozenset(moves_left), tuple(hallway))
+    cache_key = BoardState(
+        moves_left=frozenset(moves_left),
+        hallway=tuple(hallway),
+        room_sizes=tuple(room_sizes),
+    )
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -64,6 +76,7 @@ def get_possible_move_orders(
         if move.dependencies <= already_done_set:
             new_hallway = list(hallway)
             if move.type == "dest":
+                new_room_sizes = list(room_sizes)
                 # dest + 1 is the spot to the left of the room
                 hallway_idx = hallway.index(move.amphipod)
                 dest = move.amphipod.dest()
@@ -81,6 +94,7 @@ def get_possible_move_orders(
                     hallway_to_traverse = hallway[left:right]
                     if hallway_to_traverse and any(hallway_to_traverse):
                         continue
+                new_room_sizes[dest] += 1
                 new_hallway[hallway_idx] = None
                 steps_taken = get_hallway_real_distance(left, right) + 1 + (
                     1 if (
@@ -90,10 +104,21 @@ def get_possible_move_orders(
                     else 2
                 )
                 energy = steps_taken * move.amphipod.get_energy_per_move()
-                min_energy = min(min_energy, get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache, energy_so_far + energy))
+                min_energy = min(
+                    min_energy,
+                    get_possible_move_orders(
+                        moves_left - {move},
+                        already_done + [move],
+                        new_hallway,
+                        cache,
+                        new_room_sizes,
+                        energy_so_far + energy
+                    ))
+
             else:
                 # to the left
-
+                new_room_sizes = list(room_sizes)
+                new_room_sizes[move.amphipod.starting_room] -= 1
                 right = move.amphipod.starting_room + 1
                 for steps, i in enumerate(range(right, -1, -1)):
                     new_hallway = list(hallway)
@@ -105,7 +130,17 @@ def get_possible_move_orders(
                         else 2
                     )
                     energy = steps_taken * move.amphipod.get_energy_per_move()
-                    min_energy = min(min_energy, get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache, energy_so_far + energy))
+                    min_energy = min(
+                        min_energy,
+                        get_possible_move_orders(
+                            moves_left - {move},
+                            already_done + [move],
+                            new_hallway,
+                            cache,
+                            new_room_sizes,
+                            energy_so_far + energy
+                        )
+                    )
                 # to the right
 
                 left = move.amphipod.starting_room + 2
@@ -119,9 +154,19 @@ def get_possible_move_orders(
                         else 2
                     )
                     energy = steps_taken * move.amphipod.get_energy_per_move()
-                    min_energy = min(min_energy, get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache, energy_so_far + energy))
+                    min_energy = min(
+                        min_energy,
+                        get_possible_move_orders(
+                            moves_left - {move},
+                            already_done + [move],
+                            new_hallway,
+                            cache,
+                            new_room_sizes,
+                            energy_so_far + energy
+                        )
+                    )
 
-    # cache[cache_key] = min_energy
+    cache[cache_key] = min_energy
     return min_energy
 
 
@@ -174,7 +219,15 @@ def get_min_energy(config: list[tuple[str, str]]) -> int:
         for move in moves_by_type.values():
             all_moves.add(move)
 
-    all_possible_orders = get_possible_move_orders(all_moves, [], [None for _ in range(7)], {})
+    room_sizes = [0, 0, 0, 0]
+    for i, color in enumerate(CORRECT_ROOMS):
+        top, bottom = config[i]
+        if bottom == color:
+            room_sizes[i] = 1
+        else:
+            room_sizes[i] = 0
+
+    all_possible_orders = get_possible_move_orders(all_moves, [], [None for _ in range(7)], {}, room_sizes)
     print(all_possible_orders)
     # print(len(all_possible_orders))
     # simplified = []
@@ -189,5 +242,8 @@ def get_min_energy(config: list[tuple[str, str]]) -> int:
 if __name__ == '__main__':
     start = time.perf_counter()
     get_min_energy([("B","A"), ("C", "D"), ("B", "C"), ("D", "A")])
+    # get_min_energy([("D", "B"), ("D", "A"), ("C", "B"), ("C", "A")])
     end = time.perf_counter()
     print(end - start)
+
+    # 16429 too high
