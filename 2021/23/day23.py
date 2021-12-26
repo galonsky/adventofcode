@@ -50,6 +50,7 @@ def get_possible_move_orders(
     already_done: list[Move],
     hallway: list[Optional[Amphipod]],
     cache: dict[tuple[frozenset[Move], tuple[Optional[Amphipod]]], int],
+    energy_so_far: int = 0,
 ) -> int:
     already_done_set = frozenset(already_done)
     cache_key = (frozenset(moves_left), tuple(hallway))
@@ -57,7 +58,7 @@ def get_possible_move_orders(
     if cached is not None:
         return cached
     if not moves_left:
-        return 0
+        return energy_so_far
     min_energy = float('inf')
     for move in moves_left:
         if move.dependencies <= already_done_set:
@@ -70,7 +71,7 @@ def get_possible_move_orders(
                     # dest is to the right
                     left = hallway_idx
                     right = dest + 1
-                    hallway_to_traverse = hallway[left+1:right]
+                    hallway_to_traverse = hallway[left+1:right+1]
                     if hallway_to_traverse and any(hallway_to_traverse):
                         continue
                 else:
@@ -89,7 +90,7 @@ def get_possible_move_orders(
                     else 2
                 )
                 energy = steps_taken * move.amphipod.get_energy_per_move()
-                min_energy = min(min_energy, energy + get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache))
+                min_energy = min(min_energy, get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache, energy_so_far + energy))
             else:
                 # to the left
 
@@ -104,7 +105,7 @@ def get_possible_move_orders(
                         else 2
                     )
                     energy = steps_taken * move.amphipod.get_energy_per_move()
-                    min_energy = min(min_energy, energy + get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache))
+                    min_energy = min(min_energy, get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache, energy_so_far + energy))
                 # to the right
 
                 left = move.amphipod.starting_room + 2
@@ -118,9 +119,9 @@ def get_possible_move_orders(
                         else 2
                     )
                     energy = steps_taken * move.amphipod.get_energy_per_move()
-                    min_energy = min(min_energy, energy + get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache))
+                    min_energy = min(min_energy, get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache, energy_so_far + energy))
 
-    cache[cache_key] = min_energy
+    # cache[cache_key] = min_energy
     return min_energy
 
 
