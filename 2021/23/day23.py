@@ -7,11 +7,11 @@ from typing import Iterable, Optional
 CORRECT_ROOMS = ['A','B','C','D']
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Amphipod:
-    color: str
-    starting_room: int
-    top: bool
+    color: str = field(compare=True)
+    starting_room: int = field(compare=True)
+    top: bool = field(compare=True)
 
     def dest(self) -> int:
         return CORRECT_ROOMS.index(self.color)
@@ -20,7 +20,7 @@ class Amphipod:
         return pow(10, (ord(self.color) - ord('A')))
 
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True, unsafe_hash=True, order=True)
 class Move:
     amphipod: Amphipod
     type: str
@@ -60,7 +60,7 @@ def get_possible_move_orders(
     if not moves_left:
         return energy_so_far
     min_energy = float('inf')
-    for move in moves_left:
+    for move in sorted(moves_left):
         if move.dependencies <= already_done_set:
             new_hallway = list(hallway)
             if move.type == "dest":
@@ -97,7 +97,7 @@ def get_possible_move_orders(
                 right = move.amphipod.starting_room + 1
                 for steps, i in enumerate(range(right, -1, -1)):
                     new_hallway = list(hallway)
-                    if hallway[i] or steps > 1:
+                    if hallway[i]:
                         break
                     new_hallway[i] = move.amphipod
                     steps_taken = get_hallway_real_distance(i, right) + 1 + (
@@ -111,7 +111,7 @@ def get_possible_move_orders(
                 left = move.amphipod.starting_room + 2
                 for steps, i in enumerate(range(left, len(hallway))):
                     new_hallway = list(hallway)
-                    if hallway[i] or steps > 1:
+                    if hallway[i]:
                         break
                     new_hallway[i] = move.amphipod
                     steps_taken = get_hallway_real_distance(left, i) + 1 + (
@@ -121,7 +121,7 @@ def get_possible_move_orders(
                     energy = steps_taken * move.amphipod.get_energy_per_move()
                     min_energy = min(min_energy, get_possible_move_orders(moves_left - {move}, already_done + [move], new_hallway, cache, energy_so_far + energy))
 
-    # cache[cache_key] = min_energy
+    cache[cache_key] = min_energy
     return min_energy
 
 
