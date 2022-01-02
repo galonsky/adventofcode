@@ -2,7 +2,6 @@ import json
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from itertools import permutations
 from typing import Iterable, Optional
 
 CORRECT_ROOMS = ['A','B','C','D']
@@ -12,7 +11,7 @@ CORRECT_ROOMS = ['A','B','C','D']
 class Amphipod:
     color: str = field(compare=True)
     starting_room: int = field(compare=True)
-    top: bool = field(compare=True)
+    pos: int = field(compare=True)  # 0 is top
 
     def dest(self) -> int:
         return CORRECT_ROOMS.index(self.color)
@@ -56,6 +55,9 @@ class Room:
     def __eq__(self, other):
         return self.members == other.members
 
+    def __len__(self):
+        return len(self.members)
+
     def add(self, other: str):
         return Room(self.members + [other])
 
@@ -78,6 +80,7 @@ def get_possible_move_orders(
     hallway: list[Optional[Amphipod]],
     cache: dict[BoardState, int],
     rooms: tuple[Room],
+    depth: int,
 ) -> int:
     already_done_set = frozenset(already_done)
     cache_key = BoardState(
@@ -116,11 +119,7 @@ def get_possible_move_orders(
                 new_rooms = tuple(room if i != dest else new_room for i, room in enumerate(rooms))
                 new_hallway[hallway_idx] = None
                 steps_taken = get_hallway_real_distance(left, right) + 1 + (
-                    1 if (
-                        [m for m in already_done if m.amphipod.color == move.amphipod.color and m.type == "dest"]
-                        or len([m for m in already_done_set | moves_left if m.amphipod.color == move.amphipod.color and m.type == "dest"]) < 2
-                    )
-                    else 2
+                    depth - len(new_room) + 1
                 )
                 energy = steps_taken * move.amphipod.get_energy_per_move()
                 min_energy = min(
@@ -131,11 +130,12 @@ def get_possible_move_orders(
                         new_hallway,
                         cache,
                         new_rooms,
+                        depth,
                     ))
 
             else:
                 # to the left
-                new_room = rooms[move.amphipod.starting_room].remove(move.amphipod.color)
+                new_room: Room = rooms[move.amphipod.starting_room].remove(move.amphipod.color)
                 new_rooms = tuple(room if i != move.amphipod.starting_room else new_room for i, room in enumerate(rooms))
                 right = move.amphipod.starting_room + 1
                 for steps, i in enumerate(range(right, -1, -1)):
@@ -144,8 +144,7 @@ def get_possible_move_orders(
                         break
                     new_hallway[i] = move.amphipod
                     steps_taken = get_hallway_real_distance(i, right) + 1 + (
-                        1 if move.amphipod.top
-                        else 2
+                        move.amphipod.pos + 1
                     )
                     energy = steps_taken * move.amphipod.get_energy_per_move()
                     min_energy = min(
@@ -156,6 +155,7 @@ def get_possible_move_orders(
                             new_hallway,
                             cache,
                             new_rooms,
+                            depth,
                         )
                     )
                 # to the right
@@ -167,8 +167,7 @@ def get_possible_move_orders(
                         break
                     new_hallway[i] = move.amphipod
                     steps_taken = get_hallway_real_distance(left, i) + 1 + (
-                        1 if move.amphipod.top
-                        else 2
+                        move.amphipod.pos + 1
                     )
                     energy = steps_taken * move.amphipod.get_energy_per_move()
                     min_energy = min(
@@ -179,6 +178,7 @@ def get_possible_move_orders(
                             new_hallway,
                             cache,
                             new_rooms,
+                            depth,
                         )
                     )
 
@@ -186,24 +186,30 @@ def get_possible_move_orders(
     return min_energy
 
 
-def get_min_energy(config: list[tuple[str, str]]) -> int:
+def get_min_energy(config: list[tuple[str, ...]]) -> int:
     """
 
-    :param config: starting config starting from the left, where each tuple is (top, bottom)
+    :param config: starting config starting from the left, where each tuple is top to bottom
     :return: all possible moves
     """
-    amphipods_by_room: dict[int, tuple[Amphipod, Amphipod]] = {}
-    for i, (top, bottom) in enumerate(config):
-        top = Amphipod(color=top, starting_room=i, top=True)
-        bottom = Amphipod(color=bottom, starting_room=i, top=False)
-        amphipods_by_room[i] = top, bottom
+    amphipods_by_room: dict[int, tuple[Amphipod, ...]] = {}
+    for room, pods in enumerate(config):
+        room_list = []
+        for i, color in enumerate(pods):
+            amphipod = Amphipod(color=color, starting_room=room, pos=i)
+            room_list.append(amphipod)
+        amphipods_by_room[room] = tuple(room_list)
+
+    depth = len(amphipods_by_room[0])
 
     moves_by_amphipod = defaultdict(dict)
-    for top, bottom in amphipods_by_room.values():
-        top_out = Move(amphipod=top, type="out", dependencies=frozenset())
-        moves_by_amphipod[top]["out"] = top_out
-        bottom_out = Move(amphipod=bottom, type="out", dependencies=frozenset({top_out}))
-        moves_by_amphipod[bottom]["out"] = bottom_out
+    for top_to_bottom in amphipods_by_room.values():
+        last_out_rule = None
+        for i, amphipod in enumerate(top_to_bottom):
+            dependencies = frozenset({last_out_rule}) if last_out_rule else frozenset()
+            rule = Move(amphipod=amphipod, type="out", dependencies=dependencies)
+            moves_by_amphipod[amphipod]["out"] = rule
+            last_out_rule = rule
 
     for amphipod in moves_by_amphipod:
         dependencies = {
@@ -211,24 +217,24 @@ def get_min_energy(config: list[tuple[str, str]]) -> int:
         }
         dest_room = amphipod.dest()
         if amphipod.starting_room == dest_room:
-            if amphipod.top:
-                bottom = amphipods_by_room[dest_room][1]
-                if bottom.dest() != dest_room:
-                    dependencies.add(moves_by_amphipod[bottom]["out"])
+            if amphipod.pos < depth - 1:  # if any below
+                # find lowest one that's not in the right room
+                pods_below = [pod for pod in amphipods_by_room[dest_room] if pod.dest() != dest_room and pod.pos > amphipod.pos]
+                if pods_below:
+                    lowest = max(pods_below, key=lambda pod: pod.pos)
+                    dependencies.add(moves_by_amphipod[lowest]["out"])
                     dest_move = Move(amphipod=amphipod, type="dest", dependencies=frozenset(dependencies))
                     moves_by_amphipod[amphipod]["dest"] = dest_move
             else:
+                # none are below and we're already in the right room
                 del moves_by_amphipod[amphipod]["out"]
-            continue
-
-
-        dest_top, dest_bottom = amphipods_by_room[dest_room]
-        if dest_bottom.color != CORRECT_ROOMS[dest_room]:
-            dependencies.add(moves_by_amphipod[dest_bottom]["out"])
-        if dest_top.color != CORRECT_ROOMS[dest_room]:
-            dependencies.add(moves_by_amphipod[dest_top]["out"])
-        dest_move = Move(amphipod=amphipod, type="dest", dependencies=frozenset(dependencies))
-        moves_by_amphipod[amphipod]["dest"] = dest_move
+        else:
+            pods_not_in_right_room = [pod for pod in amphipods_by_room[dest_room] if pod.dest() != dest_room]
+            if pods_not_in_right_room:
+                lowest = max(pods_not_in_right_room, key=lambda pod: pod.pos)
+                dependencies.add(moves_by_amphipod[lowest]["out"])
+            dest_move = Move(amphipod=amphipod, type="dest", dependencies=frozenset(dependencies))
+            moves_by_amphipod[amphipod]["dest"] = dest_move
 
     all_moves = set()
     for moves_by_type in moves_by_amphipod.values():
@@ -239,7 +245,7 @@ def get_min_energy(config: list[tuple[str, str]]) -> int:
         Room(t) for t in config
     )
 
-    all_possible_orders = get_possible_move_orders(all_moves, [], [None for _ in range(7)], {}, rooms)
+    all_possible_orders = get_possible_move_orders(all_moves, [], [None for _ in range(7)], {}, rooms, depth)
     print(all_possible_orders)
     # print(len(all_possible_orders))
     # simplified = []
@@ -253,8 +259,8 @@ def get_min_energy(config: list[tuple[str, str]]) -> int:
 
 if __name__ == '__main__':
     start = time.perf_counter()
-    get_min_energy([("B","A"), ("C", "D"), ("B", "C"), ("D", "A")])
-    # get_min_energy([("D", "B"), ("D", "A"), ("C", "B"), ("C", "A")])
+    # get_min_energy([("B","A"), ("C", "D"), ("B", "C"), ("D", "A")])
+    get_min_energy([("D", "B"), ("D", "A"), ("C", "B"), ("C", "A")])
     end = time.perf_counter()
     print(end - start)
 
