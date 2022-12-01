@@ -1,3 +1,4 @@
+from heapq import nlargest
 from typing import Generator
 
 
@@ -19,5 +20,11 @@ def find_highest_calorie_elf(filename: str) -> int:
     return max((sum(c_list) for c_list in elves))
 
 
+def find_3_largest(filename: str) -> int:
+    elves = iterate_elves(filename)
+    return sum(nlargest(3, (sum(c_list) for c_list in elves)))
+
+
 if __name__ == '__main__':
-    print(find_highest_calorie_elf("input.txt"))
+    # print(find_highest_calorie_elf("input.txt"))
+    print(find_3_largest("input.txt"))
