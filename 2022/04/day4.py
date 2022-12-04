@@ -26,5 +26,17 @@ def how_many_pairs_fully_contain(filename: str) -> int:
     return num_contained
 
 
+def how_many_total_overlaps(filename: str) -> int:
+    assignments = get_assignments(filename)
+    num_contained = 0
+    for assignment in assignments:
+        if (
+                assignment[1][0] <= assignment[0][0] <= assignment[1][1]
+                or assignment[0][0] <= assignment[1][0] <= assignment[0][1]
+        ):
+            num_contained += 1
+    return num_contained
+
+
 if __name__ == '__main__':
-    print(how_many_pairs_fully_contain("input.txt"))
+    print(how_many_total_overlaps("input.txt"))
