@@ -42,6 +42,22 @@ def do_moves(filename: str, crates: list[deque[str]] = SAMPLE_CRATES) -> str:
     return result
 
 
+def do_moves_9001(filename: str, crates: list[deque[str]] = SAMPLE_CRATES) -> str:
+    moves = get_input(filename)
+    for move in moves:
+        num, src, dest = move
+        temp = deque()
+        for _ in range(num):
+            temp.append(crates[src-1].popleft())
+        while temp:
+            crates[dest - 1].appendleft(temp.pop())
+
+    result = ""
+    for crate in crates:
+        result += crate.popleft()
+    return result
+
+
 if __name__ == '__main__':
-    print(do_moves("input.txt", INPUT_CRATES))
+    print(do_moves_9001("input.txt", INPUT_CRATES))
 
