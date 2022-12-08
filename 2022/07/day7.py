@@ -1,6 +1,6 @@
 import re
 import dataclasses
-from typing import Optional, List, Generator
+from typing import Optional, Generator, Set
 
 COMMAND_PATTERN = re.compile(r'\$ (.+)')
 FILE_PATTERN = re.compile(r'(\d+) (.+)')
@@ -90,15 +90,33 @@ def get_sum_of_dir_sizes_under_limit(root: FileNode, limit: int) -> int:
     return total
 
 
-
-
-
 def find_size_to_delete(filename: str) -> int:
     root = build_file_tree(filename)
     populate_total_sizes(root)
     return get_sum_of_dir_sizes_under_limit(root, 100000)
 
 
+def get_all_dir_sizes(root: FileNode) -> Set[int]:
+    if root.size != 0:
+        return set()
+
+    return_set = {root.total_size}
+    for c in root.children.values():
+        return_set |= get_all_dir_sizes(c)
+    return return_set
+
+
+def find_smallest_dir_to_delete(filename: str) -> int:
+    root = build_file_tree(filename)
+    populate_total_sizes(root)
+    capacity = 70000000
+    used = root.total_size
+    free = capacity - used
+    need_to_delete = 30000000 - free
+
+    all_dir_sizes = get_all_dir_sizes(root)
+    return min(size for size in all_dir_sizes if size > need_to_delete)
+
 
 if __name__ == '__main__':
-    print(find_size_to_delete(filename="input.txt"))
+    print(find_smallest_dir_to_delete(filename="input.txt"))
