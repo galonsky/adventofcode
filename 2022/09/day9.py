@@ -64,6 +64,50 @@ def get_num_locations_tail_visited(instructions: Iterable[Tuple[str, int]]) -> i
     return len(unique_tail_locations)
 
 
+def get_num_locations_tail_visited_ten_knots(instructions: Iterable[Tuple[str, int]]) -> int:
+    knots = [(0, 0) for _ in range(10)]
+
+    unique_tail_locations = set()
+    unique_tail_locations.add(knots[-1])
+
+    for instruction in instructions:
+        vector = VECTORS_BY_DIRECTION[instruction[0]]
+        for _ in range(instruction[1]):
+            knots[0] = (knots[0][0] + vector[0], knots[0][1] + vector[1])
+
+            for i in range(1, len(knots)):
+                if are_touching(knots[i-1], knots[i]):
+                    continue
+
+                if knots[i] == (knots[i-1][0] + 2, knots[i-1][1]):
+                    # tail is to the right
+                    knots[i] = (knots[i][0] - 1, knots[i][1])
+                elif knots[i] == (knots[i-1][0] - 2, knots[i-1][1]):
+                    # tail is to the left
+                    knots[i] = (knots[i][0] + 1, knots[i][1])
+                elif knots[i] == (knots[i-1][0], knots[i-1][1] + 2):
+                    # tail is above
+                    knots[i] = (knots[i][0], knots[i][1] - 1)
+                elif knots[i] == (knots[i-1][0], knots[i-1][1] - 2):
+                    # tail is below
+                    knots[i] = (knots[i][0], knots[i][1] + 1)
+                elif knots[i-1][0] - knots[i][0] > 0 and knots[i-1][1] - knots[i][1] > 0:
+                    # head is northeast
+                    knots[i] = (knots[i][0] + 1, knots[i][1] + 1)
+                elif knots[i-1][0] - knots[i][0] < 0 and knots[i-1][1] - knots[i][1] > 0:
+                    # head is northwest
+                    knots[i] = (knots[i][0] - 1, knots[i][1] + 1)
+                elif knots[i-1][0] - knots[i][0] > 0 and knots[i-1][1] - knots[i][1] < 0:
+                    # head is southeast
+                    knots[i] = (knots[i][0] + 1, knots[i][1] - 1)
+                elif knots[i-1][0] - knots[i][0] < 0 and knots[i-1][1] - knots[i][1] < 0:
+                    # head is southwest
+                    knots[i] = (knots[i][0] - 1, knots[i][1] - 1)
+
+            unique_tail_locations.add(knots[-1])
+    return len(unique_tail_locations)
+
+
 if __name__ == '__main__':
     instructions = get_instructions("input.txt")
-    print(get_num_locations_tail_visited(instructions))
+    print(get_num_locations_tail_visited_ten_knots(instructions))
