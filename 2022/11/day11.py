@@ -3,7 +3,7 @@ from collections import deque
 from functools import reduce
 from heapq import nlargest
 from operator import mul
-from typing import Iterable, Iterator, Union
+from typing import Iterable, Iterator, Union, Optional
 
 
 @dataclasses.dataclass
@@ -16,13 +16,18 @@ class MonkeyRule:
     false_monkey: int
     num_items_inspected: int = 0
 
-    def inspect(self, monkeys_by_id: dict[int, "MonkeyRule"]) -> None:
+    def adjust_worry_level(self, worry_level: int, special_divisor: Optional[int]) -> int:
+        if special_divisor is None:
+            return worry_level // 3
+        return worry_level % special_divisor
+
+    def inspect(self, monkeys_by_id: dict[int, "MonkeyRule"], worry_reduction_advanced: bool = False) -> None:
         while self.items:
             worry_level = self.items.popleft()
             self.num_items_inspected += 1
             operand = self.operation[1] if isinstance(self.operation[1], int) else worry_level
             worry_level = (worry_level + operand) if self.operation[0] == "+" else (worry_level * operand)
-            worry_level //= 3
+            worry_level = self.adjust_worry_level(worry_level, special_divisor=reduce(mul, [rule.divisible for rule in monkeys_by_id.values()]) if worry_reduction_advanced else None)
             result = worry_level % self.divisible == 0
             new_monkey = self.true_monkey if result else self.false_monkey
             monkeys_by_id[new_monkey].items.append(worry_level)
@@ -65,18 +70,20 @@ def parse_monkeys(filename: str) -> Iterable[MonkeyRule]:
             id += 1
 
 
-def get_monkey_business(rules: Iterable[MonkeyRule], rounds: int) -> int:
+def get_monkey_business(rules: Iterable[MonkeyRule], rounds: int, worry_reduction_advanced: bool = False) -> int:
     rules_by_id: dict[int, MonkeyRule] = {
         rule.id: rule for rule in rules
     }
     for _ in range(rounds):
         for monkey in rules_by_id.values():
-            monkey.inspect(monkeys_by_id=rules_by_id)
+            monkey.inspect(monkeys_by_id=rules_by_id, worry_reduction_advanced=worry_reduction_advanced)
 
+    print([rule.num_items_inspected for rule in rules_by_id.values()])
     return reduce(mul, nlargest(2, [rule.num_items_inspected for rule in rules_by_id.values()]))
 
 
 
 if __name__ == '__main__':
     monkeys = list(parse_monkeys("input.txt"))
-    print(get_monkey_business(monkeys, 20))
+    # print(get_monkey_business(monkeys, 20))
+    print(get_monkey_business(monkeys, 10000, worry_reduction_advanced=True))
