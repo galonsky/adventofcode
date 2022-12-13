@@ -1,15 +1,32 @@
 import dataclasses
+from collections import deque
+from functools import reduce
+from heapq import nlargest
+from operator import mul
 from typing import Iterable, Iterator, Union
 
 
 @dataclasses.dataclass
 class MonkeyRule:
     id: int
-    starting_items: list[int]
+    items: deque[int]
     operation: tuple[str, Union[int, str]]
     divisible: int
     true_monkey: int
     false_monkey: int
+    num_items_inspected: int = 0
+
+    def inspect(self, monkeys_by_id: dict[int, "MonkeyRule"]) -> None:
+        while self.items:
+            worry_level = self.items.popleft()
+            self.num_items_inspected += 1
+            operand = self.operation[1] if isinstance(self.operation[1], int) else worry_level
+            worry_level = (worry_level + operand) if self.operation[0] == "+" else (worry_level * operand)
+            worry_level //= 3
+            result = worry_level % self.divisible == 0
+            new_monkey = self.true_monkey if result else self.false_monkey
+            monkeys_by_id[new_monkey].items.append(worry_level)
+
 
 
 def next_line(line_iter: Iterator[str]) -> str:
@@ -39,7 +56,7 @@ def parse_monkeys(filename: str) -> Iterable[MonkeyRule]:
             next(line_iter, None)  # blank
             yield MonkeyRule(
                 id=id,
-                starting_items=items,
+                items=deque(items),
                 operation=operation_tuple,
                 divisible=divisible,
                 true_monkey=true_monkey,
@@ -48,6 +65,18 @@ def parse_monkeys(filename: str) -> Iterable[MonkeyRule]:
             id += 1
 
 
+def get_monkey_business(rules: Iterable[MonkeyRule], rounds: int) -> int:
+    rules_by_id: dict[int, MonkeyRule] = {
+        rule.id: rule for rule in rules
+    }
+    for _ in range(rounds):
+        for monkey in rules_by_id.values():
+            monkey.inspect(monkeys_by_id=rules_by_id)
+
+    return reduce(mul, nlargest(2, [rule.num_items_inspected for rule in rules_by_id.values()]))
+
+
+
 if __name__ == '__main__':
-    monkeys = list(parse_monkeys("sample.txt"))
-    print(monkeys)
+    monkeys = list(parse_monkeys("input.txt"))
+    print(get_monkey_business(monkeys, 20))
