@@ -1,4 +1,6 @@
 import json
+from functools import cmp_to_key
+from itertools import chain
 from typing import List, Generator, Iterable
 
 PacketListType = List["PacketListType"] | int
@@ -22,6 +24,11 @@ def get_sum_pairs_in_order(pairs: Iterable[tuple[PacketListType, PacketListType]
             sum_in_order += (i + 1)
     return sum_in_order
 
+
+def get_decoder_key(pairs: Iterable[tuple[PacketListType, PacketListType]]) -> int:
+    all_packets = chain(chain.from_iterable(pairs), ([[2]], [[6]]))
+    inorder = sorted(all_packets, key=cmp_to_key(cmp))
+    return (inorder.index([[6]]) + 1) * (inorder.index([[2]]) + 1)
 
 
 def cmp(left: PacketListType, right: PacketListType) -> int:
@@ -67,5 +74,6 @@ def test_things():
 
 
 if __name__ == '__main__':
-    pairs = get_pairs("input.txt")
+    pairs = list(get_pairs("input.txt"))
     print(get_sum_pairs_in_order(pairs))
+    print(get_decoder_key(pairs))
