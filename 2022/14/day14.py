@@ -79,19 +79,84 @@ def drop_single_sand(sand_map: dict[tuple[int, int], str], lower_limit: int):
             raise OverTheEdgeException
 
 
+class AccessorWithFloor:
+    def __init__(self, sand_map: dict[tuple[int, int], str], floor: int):
+        self.sand_map = sand_map
+        self.floor = floor
+
+    def is_occupied(self, coord: tuple[int, int]) -> bool:
+        if coord in self.sand_map:
+            return True
+        if coord[1] >= self.floor:
+            return True
+        return False
+
+    def set(self, coord: tuple[int, int]) -> None:
+        self.sand_map[coord] = 'o'
+
+    def free(self, coord: tuple[int, int]) -> None:
+        del self.sand_map[coord]
+
+
+def drop_single_sand_with_floor(sand_map: dict[tuple[int, int], str], floor: int):
+    accessor = AccessorWithFloor(sand_map, floor)
+    sand = (500, 0)
+    accessor.set(sand)
+    while True:
+        below = (sand[0], sand[1] + 1)
+        if accessor.is_occupied(below):
+
+            lower_left = (sand[0] - 1, sand[1] + 1)
+            if accessor.is_occupied(lower_left):
+                lower_right = (sand[0] + 1, sand[1] + 1)
+                if accessor.is_occupied(lower_right):
+                    # at rest
+                    if sand == (500, 0):
+                        raise OverTheEdgeException
+                    return
+                else:
+                    accessor.free(sand)
+                    sand = lower_right
+                    accessor.set(sand)
+            else:
+                accessor.free(sand)
+                sand = lower_left
+                accessor.set(sand)
+        else:
+            accessor.free(sand)
+            sand = below
+            accessor.set(sand)
+        # print()
+        # print_map(sand_map)
+
+
+
 def drop_all_sand(sand_map: dict[tuple[int, int], str]) -> int:
     max_y = max(k[1] for k in sand_map)
     num_at_rest = 0
     while True:
         try:
             drop_single_sand(sand_map, lower_limit=max_y)
+            print_map(sand_map)
             num_at_rest += 1
         except OverTheEdgeException:
             return num_at_rest
+
+
+def drop_all_sand_with_floor(sand_map: dict[tuple[int, int], str]) -> int:
+    max_y = max(k[1] for k in sand_map)
+    num_at_rest = 0
+    while True:
+        try:
+            drop_single_sand_with_floor(sand_map, floor=max_y+2)
+            num_at_rest += 1
+        except OverTheEdgeException:
+            return num_at_rest + 1
 
 
 if __name__ == '__main__':
     lines = get_input("input.txt")
     sand_map = build_map(lines)
     print_map(sand_map)
-    print(drop_all_sand(sand_map))
+    # print(drop_all_sand(sand_map))
+    print(drop_all_sand_with_floor(sand_map))
