@@ -47,7 +47,51 @@ def print_map(sand_map: dict[tuple[int, int], str]) -> None:
         print()
 
 
+class OverTheEdgeException(Exception):
+    pass
+
+
+def drop_single_sand(sand_map: dict[tuple[int, int], str], lower_limit: int):
+    sand = (500, 0)
+    sand_map[sand] = '.'
+    while True:
+        below = (sand[0], sand[1] + 1)
+        if below in sand_map:
+            lower_left = (sand[0] - 1, sand[1] + 1)
+            if lower_left in sand_map:
+                lower_right = (sand[0] + 1, sand[1] + 1)
+                if lower_right in sand_map:
+                    # at rest
+                    return
+                else:
+                    del sand_map[sand]
+                    sand = lower_right
+                    sand_map[sand] = '.'
+            else:
+                del sand_map[sand]
+                sand = lower_left
+                sand_map[sand] = '.'
+        else:
+            del sand_map[sand]
+            sand = below
+            sand_map[sand] = '.'
+        if sand[1] > lower_limit:
+            raise OverTheEdgeException
+
+
+def drop_all_sand(sand_map: dict[tuple[int, int], str]) -> int:
+    max_y = max(k[1] for k in sand_map)
+    num_at_rest = 0
+    while True:
+        try:
+            drop_single_sand(sand_map, lower_limit=max_y)
+            num_at_rest += 1
+        except OverTheEdgeException:
+            return num_at_rest
+
+
 if __name__ == '__main__':
-    lines = get_input("sample.txt")
+    lines = get_input("input.txt")
     sand_map = build_map(lines)
     print_map(sand_map)
+    print(drop_all_sand(sand_map))
