@@ -1,0 +1,53 @@
+from typing import Generator, Tuple, Iterable
+
+
+def get_input(filename: str) -> Generator[list[Tuple[int, int]], None, None]:
+    with open(filename, 'r') as file:
+        for line in file:
+            pairs_list = []
+            pairs = line.strip().split(" -> ")
+            for pair in pairs:
+                parts = pair.split(",")
+                pairs_list.append((int(parts[0]), int(parts[1])))
+            yield pairs_list
+
+
+def build_map(lines: Iterable[list[Tuple[int, int]]]) -> dict[tuple[int, int], str]:
+    sand_map: dict[tuple[int, int], str] = {}
+    for line in lines:
+        sand_map[line[0]] = "#"
+        last = line[0]
+        for i in range(1, len(line)):
+            current = line[i]
+            sand_map[current] = "#"
+            if current[0] == last[0]:
+                # vertical
+                increment = 1 if current[1] - last[1] > 0 else -1
+                for j in range(last[1] + increment, current[1], increment):
+                    sand_map[(current[0], j)] = "#"
+            else:
+                # horizontal
+                increment = 1 if current[0] - last[0] > 0 else -1
+                for j in range(last[0] + increment, current[0], increment):
+                    sand_map[(j, current[1])] = "#"
+            last = current
+
+    return sand_map
+
+
+def print_map(sand_map: dict[tuple[int, int], str]) -> None:
+    min_y = 0
+    max_y = max(k[1] for k in sand_map)
+    min_x = min(k[0] for k in sand_map)
+    max_x = max(k[0] for k in sand_map)
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            ch = sand_map.get((x, y), '.')
+            print(ch, end="")
+        print()
+
+
+if __name__ == '__main__':
+    lines = get_input("sample.txt")
+    sand_map = build_map(lines)
+    print_map(sand_map)
