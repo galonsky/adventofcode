@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 from typing import Generator, Iterable
 
 PATTERN = re.compile(r'Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)')
@@ -39,8 +40,46 @@ def get_num_no_beacons_on_line(sensor_and_beacons: Iterable[tuple[tuple[int, int
     return len(candidates)
 
 
+def get_spots_just_outside(sensor: tuple[int, int], beacon: [int, int], max_dim: int) -> Generator[tuple[int, int], None, None]:
+    beacon_distance = distance(sensor, beacon) + 1
+    # find all the points (beacon_distance + 1) from sensor
+
+    for x in range(beacon_distance + 1):
+        y = beacon_distance - x
+        yield sensor[0] + x, sensor[1] + y
+        yield sensor[0] - x, sensor[1] + y
+        yield sensor[0] + x, sensor[1] - y
+        yield sensor[0] - x, sensor[1] - y
+
+
+def find_tuning_frequency(sensor_and_beacons: list[tuple[tuple[int, int], tuple[int, int]]], max_dim: int) -> int:
+    candidates = defaultdict(int)
+    # get all the points in the "rings" just outside of sensor reach, and keep track of the number of intersections
+    for sensor, beacon in sensor_and_beacons:
+        spots = get_spots_just_outside(sensor, beacon, max_dim)
+        for spot in spots:
+            if 0 <= spot[0] <= max_dim and 0 <= spot[1] <= max_dim:
+                candidates[spot] += 1
+
+    max_no_intersections = max(candidates.values())
+
+    # there will be ties for number of intersections, so find the one that is actually not in range of sensors
+    for spot in [c for c in candidates if candidates[c] == max_no_intersections]:
+        success = True
+        for sensor, beacon in sensor_and_beacons:
+            beacon_distance = distance(sensor, beacon)
+            sensor_to_spot = distance(sensor, spot)
+            if sensor_to_spot <= beacon_distance:
+                success = False
+                break
+        if success:
+            return 4000000 * spot[0] + spot[1]
+
+
+
 if __name__ == '__main__':
-    sensor_data = get_sensor_and_beacon_pairs("input.txt")
-    print(get_num_no_beacons_on_line(sensor_data, 2000000))
-    # sensor_data = get_sensor_and_beacon_pairs("sample.txt")
+    # sensor_data = get_sensor_and_beacon_pairs("input.txt")
+    # print(get_num_no_beacons_on_line(sensor_data, 2000000))
+    sensor_data = list(get_sensor_and_beacon_pairs("input.txt"))
     # print(get_num_no_beacons_on_line(sensor_data, 10))
+    print(find_tuning_frequency(sensor_data, 4000000))
