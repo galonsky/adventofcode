@@ -36,6 +36,17 @@ def get_sum_possible_games(games: dict[int, list[dict[str, int]]]) -> int:
     return total
 
 
+def get_sum_of_power(games: dict[int, list[dict[str, int]]]) -> int:
+    total = 0
+    for game_id, handfuls in games.items():
+        max_red = max(handful.get("red", 0) for handful in handfuls)
+        max_green = max(handful.get("green", 0) for handful in handfuls)
+        max_blue = max(handful.get("blue", 0) for handful in handfuls)
+        total += max_red * max_green * max_blue
+    return total
+
+
 if __name__ == '__main__':
     games = get_input("input.txt")
     print(get_sum_possible_games(games))
+    print(get_sum_of_power(games))
