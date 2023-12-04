@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Generator, Iterable
 
@@ -12,10 +13,13 @@ class Card:
     your_nums: set[int]
 
     def score(self) -> int:
-        num_intersecting = len(self.winning_nums & self.your_nums)
-        if not num_intersecting:
-             return 0
-        return 2 ** (num_intersecting - 1)
+        num_winners = self.num_winners()
+        if not num_winners:
+            return 0
+        return 2 ** (num_winners - 1)
+
+    def num_winners(self):
+        return len(self.winning_nums & self.your_nums)
 
 
 def _nums_to_set(nums: str) -> set[int]:
@@ -36,6 +40,18 @@ def get_total_score(cards: Iterable[Card]) -> int:
     return total
 
 
+def get_num_cards(cards: Iterable[Card]) -> int:
+    num_per_card_id = {
+        card.id: 1
+        for card in cards
+    }
+    for card in cards:
+        num_winners = card.num_winners()
+        for i in range(card.id + 1, card.id + 1 + num_winners):
+            num_per_card_id[i] += num_per_card_id[card.id]
+    return sum(num_per_card_id.values())
+
+
 if __name__ == '__main__':
     cards = list(get_cards("input.txt"))
-    print(get_total_score(cards))
+    print(get_num_cards(cards))
