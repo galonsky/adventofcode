@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 def get_lists(filename: str) -> tuple[list[int], list[int]]:
     l1 = []
     l2 = []
@@ -19,6 +22,15 @@ def find_total_distance(l1: list[int], l2: list[int]) -> int:
     return distance
 
 
+def find_similarity_score(l1: list[int], l2: list[int]) -> int:
+    l2_counts = defaultdict(int)
+    for n in l2:
+        l2_counts[n] += 1
+
+    return sum(n * l2_counts.get(n, 0) for n in l1)
+
+
 if __name__ == '__main__':
     lists = get_lists("input.txt")
-    print(find_total_distance(*lists))
+    # print(find_total_distance(*lists))
+    print(find_similarity_score(*lists))
