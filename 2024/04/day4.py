@@ -45,7 +45,49 @@ def find_num_matches(ws: list[str]) -> int:
     return total
 
 
+def diag(ws: list[str], startx: int, starty: int, dx: int, dy: int) -> str:
+    res = ""
+    x = startx
+    y = starty
+    while x < len(ws[0]) and y < len(ws) and x >= 0 and y >= 0:
+        res += ws[y][x]
+        x += dx
+        y += dy
+    return res
+
+
+def get_all_lines(ws: list[str]) -> Generator[str, None, None]:
+    height = len(ws)
+    width = len(ws[0])
+
+    for line in ws:
+        yield line
+    for x in range(width):
+        yield ''.join([ws[y][x] for y in range(height)])
+    # main diagonal, x and y increase each time
+    yield diag(ws, 0, 0, 1, 1)
+    for i in range(1, width):
+        yield diag(ws, i, 0, 1, 1)
+    for i in range(1, height):
+        yield diag(ws, 0, i, 1, 1)
+
+    # anti diagonal, x decreases, and y increase each time
+    yield diag(ws, width - 1, 0, -1, 1)
+    for i in range(0, width - 1):
+        yield diag(ws, i, 0, -1, 1)
+    for i in range(1, height):
+        yield diag(ws, width - 1, i, -1, 1)
+
+
+def get_all_xmas(ws: list[str]) -> int:
+    total = 0
+    for line in get_all_lines(ws):
+        total += line.count("XMAS") + line.count("SAMX")
+    return total
+
+
 
 if __name__ == '__main__':
-    ws = get_word_search("example.txt")
-    print(find_num_matches(ws))
+    ws = get_word_search("input.txt")
+    # ws = ["abcd", "efgh", "ijkl", "mnop"]
+    print(get_all_xmas(ws))
