@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+
+
 def get_ranges_and_ingredients(filename: str) -> tuple[list[tuple[int, int]], list[int]]:
     ranges = []
     ingredients = []
@@ -30,6 +33,39 @@ def count_fresh(ranges: list[tuple[int, int]], ingredients: list[int]) -> int:
     return total
 
 
+def count_all_fresh(ranges: list[tuple[int, int]]) -> int:
+    points = sorted([RangePoint(num=r[0], is_start=True) for r in ranges] + [RangePoint(num=r[1], is_start=False) for r in ranges])
+
+    total = 0
+    last_start = None
+    num_starts = 0
+    for point in points:
+        if point.is_start:
+            num_starts += 1
+            if last_start is None:
+                last_start = point.num
+        else:
+            num_starts -= 1
+            if num_starts == 0:
+                total += point.num - last_start + 1
+                last_start = None
+    return total
+
+
+@dataclass(frozen=True)
+class RangePoint:
+    num: int
+    is_start: bool
+
+
+    def __lt__(self, other: "RangePoint") -> bool:
+        if self == other:
+            return False
+        if self.num == other.num:
+            return self.is_start
+        return self.num < other.num
+
 if __name__ == '__main__':
     ranges, ingredients = get_ranges_and_ingredients("input.txt")
-    print(count_fresh(ranges, ingredients))
+    # print(count_fresh(ranges, ingredients))
+    print(count_all_fresh(ranges))
